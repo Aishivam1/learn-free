@@ -46,6 +46,34 @@ class Kernel extends HttpKernel
     ];
 
     /**
+     * The application's route middleware.
+     *
+     * These middleware may be assigned to groups or used individually.
+     *
+     * @var array<string, class-string|string>
+     */
+    protected $routeMiddleware = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+        'can' => \Illuminate\Auth\Middleware\Authorize::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        // Custom Middleware
+        'learner' => \App\Http\Middleware\EnsureLearner::class,
+        'mentor' => \App\Http\Middleware\EnsureMentor::class,
+        'admin' => \App\Http\Middleware\EnsureAdmin::class,
+        'enrolled' => \App\Http\Middleware\EnsureEnrolled::class,
+        'quiz.attempt' => \App\Http\Middleware\QuizAttemptRestriction::class,
+        'mentor.approved' => \App\Http\Middleware\ApprovedMentor::class,
+        'secure.download' => \App\Http\Middleware\SecureFileDownload::class,
+        'video.noskip' => \App\Http\Middleware\NonSkippableVideo::class,
+    ];
+
+    /**
      * The application's middleware aliases.
      *
      * Aliases may be used to conveniently assign middleware to routes and groups.

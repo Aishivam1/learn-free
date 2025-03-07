@@ -1,66 +1,219 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Study Platform - High-Level Blueprint  
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 1. Overview  
+A web-based study platform where mentors upload **video-based courses**, quizzes, and PDFs. Learners **enroll**, complete quizzes, earn **certificates**, and receive **badges/points**. Course-specific discussions allow learners to interact with mentors. Admins **approve courses** and monitor platform activities. A **Leaderboard** ranks learners based on their earned points.
 
-## About Laravel
+## 2. Target Audience  
+- **Learners**: Individuals seeking structured online courses with gamification.  
+- **Mentors**: Subject matter experts creating and managing course content.  
+- **Admins**: Oversee platform activities, approve courses, and moderate discussions.  
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 3. Core Features  
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Learners  
+✅ Enroll in **free courses** (paid courses in the future)  
+✅ Watch **non-skippable** video lectures  
+✅ Take **MCQ quizzes** (pass with **70% or higher**)  
+✅ Earn **badges & points** for completing courses, quizzes, discussions, and feedback  
+✅ **Leaderboard Ranking** (ranked based on points earned)  
+✅ Receive **auto-generated** or mentor-uploaded certificates  
+✅ Participate in **course-specific discussions**  
+✅ **Download PDFs** (only from enrolled courses)  
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Mentors  
+✅ Upload **video-based courses, quizzes, PDFs**  
+✅ Moderate course-specific discussions  
+✅ View learner feedback on courses  
 
-## Learning Laravel
+### Admin  
+✅ **Approve/reject** mentor course uploads  
+✅ **Monitor platform analytics** (total users, enrollments, quiz success rates)  
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 4. High-Level Technical Stack Recommendations  
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Frontend**: Laravel Blade, Tailwind CSS, Bootstrap  
+- **Backend**: Laravel (PHP)  
+- **Database**: MySQL  
+- **Authentication**: Laravel’s built-in authentication (email/password)  
+- **File Storage**: Laravel storage for videos, PDFs  
+- **Gamification & Leaderboard**: Custom logic using MySQL  
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 5. Conceptual Data Model  
 
-## Laravel Sponsors
+### Users Table  
+- `id`, `name`, `email`, `password`, `role (learner/mentor/admin)`, `points`, `badges`  
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+### Courses Table  
+- `id`, `mentor_id`, `title`, `description`, `video_url`, `status (pending/approved)`  
 
-### Premium Partners
+### Enrollments Table  
+- `id`, `user_id`, `course_id`, `progress`, `completed_at`  
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### Quizzes Table  
+- `id`, `course_id`, `question`, `options`, `correct_answer`  
 
-## Contributing
+### Quiz Attempts Table  
+- `id`, `user_id`, `course_id`, `score`, `passed (yes/no)`, `attempted_at`  
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Certificates Table  
+- `id`, `user_id`, `course_id`, `certificate_url`  
 
-## Code of Conduct
+### Discussions Table  
+- `id`, `course_id`, `user_id`, `message`, `created_at`  
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Leaderboard Table  
+- `id`, `user_id`, `points`, `rank`  
 
-## Security Vulnerabilities
+## 6. UI/UX Principles  
+🎨 **Modern design** with dark/light mode  
+📱 **Responsive UI** (Bootstrap + Tailwind CSS)  
+🎬 **Engaging animations** (GSAP, LottieFiles)  
+📊 **Progress visualization & Leaderboard rankings**  
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 7. Security Considerations  
+🔒 **User authentication** with Laravel’s built-in system  
+📜 **Secure video access** (restrict unauthorized downloads)  
+📁 **PDF downloads restricted to enrolled users**  
+🛡️ **Admin control over courses & discussions**  
 
-## License
+## 8. Development Phases  
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Phase 1 - Core Platform Development  
+✅ User authentication (learner, mentor, admin)  
+✅ Course upload & approval system  
+✅ Video-based course structure (non-skippable)  
+✅ Quizzes & certificate generation  
+
+### Phase 2 - Gamification & Discussions  
+✅ Badges & points system  
+✅ Course-specific discussion forums  
+✅ **Leaderboard implementation**  
+
+### Phase 3 - Analytics & Expansion  
+✅ Admin analytics dashboard  
+✅ Future paid courses implementation  
+
+## 9. Potential Challenges & Solutions  
+
+| Challenge | Solution |
+|-----------|---------|
+| **Preventing video skipping** | Use JavaScript events to block skipping & track watch time. |
+| **Scalability** (Future paid courses) | Use a modular Laravel architecture with Stripe/PayPal integration. |
+| **Leaderboard ranking performance** | Optimize database queries for sorting users by points efficiently. |
+
+## 10. Future Expansion Possibilities  
+🚀 **Mobile app development** (iOS/Android)  
+💰 **Monetization** (Paid courses & subscription model)  
+📢 **Live mentor sessions** (Webinars)  
+
+---
+# Study Platform - High-Level Blueprint  
+
+## 1. Overview  
+A web-based study platform where mentors upload **video-based courses**, quizzes, and PDFs. Learners **enroll**, complete quizzes, earn **certificates**, and receive **badges/points**. Course-specific discussions allow learners to interact with mentors. Admins **approve courses** and monitor platform activities. A **Leaderboard** ranks learners based on their earned points.
+
+## 2. Target Audience  
+- **Learners**: Individuals seeking structured online courses with gamification.  
+- **Mentors**: Subject matter experts creating and managing course content.  
+- **Admins**: Oversee platform activities, approve courses, and moderate discussions.  
+
+## 3. Core Features  
+
+### Learners  
+✅ Enroll in **free courses** (paid courses in the future)  
+✅ Watch **non-skippable** video lectures  
+✅ Take **MCQ quizzes** (pass with **70% or higher**)  
+✅ Earn **badges & points** for completing courses, quizzes, discussions, and feedback  
+✅ **Leaderboard Ranking** (ranked based on points earned)  
+✅ Receive **auto-generated** or mentor-uploaded certificates  
+✅ Participate in **course-specific discussions**  
+✅ **Download PDFs** (only from enrolled courses)  
+
+### Mentors  
+✅ Upload **video-based courses, quizzes, PDFs**  
+✅ Moderate course-specific discussions  
+✅ View learner feedback on courses  
+
+### Admin  
+✅ **Approve/reject** mentor course uploads  
+✅ **Monitor platform analytics** (total users, enrollments, quiz success rates)  
+
+## 4. High-Level Technical Stack Recommendations  
+
+- **Frontend**: Laravel Blade, Tailwind CSS, Bootstrap  
+- **Backend**: Laravel (PHP)  
+- **Database**: MySQL  
+- **Authentication**: Laravel’s built-in authentication (email/password)  
+- **File Storage**: Laravel storage for videos, PDFs  
+- **Gamification & Leaderboard**: Custom logic using MySQL  
+
+## 5. Conceptual Data Model  
+
+### Users Table  
+- `id`, `name`, `email`, `password`, `role (learner/mentor/admin)`, `points`, `badges`  
+
+### Courses Table  
+- `id`, `mentor_id`, `title`, `description`, `video_url`, `status (pending/approved)`  
+
+### Enrollments Table  
+- `id`, `user_id`, `course_id`, `progress`, `completed_at`  
+
+### Quizzes Table  
+- `id`, `course_id`, `question`, `options`, `correct_answer`  
+
+### Quiz Attempts Table  
+- `id`, `user_id`, `course_id`, `score`, `passed (yes/no)`, `attempted_at`  
+
+### Certificates Table  
+- `id`, `user_id`, `course_id`, `certificate_url`  
+
+### Discussions Table  
+- `id`, `course_id`, `user_id`, `message`, `created_at`  
+
+### Leaderboard Table  
+- `id`, `user_id`, `points`, `rank`  
+
+## 6. UI/UX Principles  
+🎨 **Modern design** with dark/light mode  
+📱 **Responsive UI** (Bootstrap + Tailwind CSS)  
+🎬 **Engaging animations** (GSAP, LottieFiles)  
+📊 **Progress visualization & Leaderboard rankings**  
+
+## 7. Security Considerations  
+🔒 **User authentication** with Laravel’s built-in system  
+📜 **Secure video access** (restrict unauthorized downloads)  
+📁 **PDF downloads restricted to enrolled users**  
+🛡️ **Admin control over courses & discussions**  
+
+## 8. Development Phases  
+
+### Phase 1 - Core Platform Development  
+✅ User authentication (learner, mentor, admin)  
+✅ Course upload & approval system  
+✅ Video-based course structure (non-skippable)  
+✅ Quizzes & certificate generation  
+
+### Phase 2 - Gamification & Discussions  
+✅ Badges & points system  
+✅ Course-specific discussion forums  
+✅ **Leaderboard implementation**  
+
+### Phase 3 - Analytics & Expansion  
+✅ Admin analytics dashboard  
+✅ Future paid courses implementation  
+
+## 9. Potential Challenges & Solutions  
+
+| Challenge | Solution |
+|-----------|---------|
+| **Preventing video skipping** | Use JavaScript events to block skipping & track watch time. |
+| **Scalability** (Future paid courses) | Use a modular Laravel architecture with Stripe/PayPal integration. |
+| **Leaderboard ranking performance** | Optimize database queries for sorting users by points efficiently. |
+
+## 10. Future Expansion Possibilities  
+🚀 **Mobile app development** (iOS/Android)  
+💰 **Monetization** (Paid courses & subscription model)  
+📢 **Live mentor sessions** (Webinars)  
+
+---
+This comprehensive project plan outlines the development of a modern online learning platform, incorporating gamification, discussions.
