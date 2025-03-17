@@ -1,4 +1,4 @@
-@extends('layouts.learner')
+@extends('layouts.app')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -7,7 +7,7 @@
 
         <form action="{{ route('quizzes.submit', $quiz->id) }}" method="POST" class="space-y-8">
             @csrf
-            
+
             @foreach($quiz->questions as $index => $question)
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <h3 class="text-xl font-semibold mb-4">Question {{ $index + 1 }}</h3>
@@ -16,8 +16,8 @@
                 <div class="space-y-3">
                     @foreach($question->options as $option)
                     <label class="flex items-start space-x-3">
-                        <input type="radio" 
-                               name="answers[{{ $question->id }}]" 
+                        <input type="radio"
+                               name="answers[{{ $question->id }}]"
                                value="{{ $option->id }}"
                                class="mt-1">
                         <span class="text-gray-700">{{ $option->content }}</span>
@@ -45,7 +45,7 @@
     function startTimer(duration) {
         let timer = duration * 60;
         const display = document.getElementById('timer');
-        
+
         const countdown = setInterval(function () {
             const minutes = parseInt(timer / 60, 10);
             const seconds = parseInt(timer % 60, 10);

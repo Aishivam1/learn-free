@@ -57,7 +57,10 @@ class Quiz extends Model
         return $this->correct_answer;
     }
 
-
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
+    }
     public function getSuccessRate()
     {
         $totalAttempts = $this->attempts()->count();

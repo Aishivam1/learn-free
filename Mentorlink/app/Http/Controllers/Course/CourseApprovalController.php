@@ -5,70 +5,73 @@ namespace App\Http\Controllers\Course;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CourseApprovalController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'role:admin']);
+        $this->middleware(middleware: 'auth');
     }
 
+    // List pending courses
     public function listPendingCourses()
     {
+        if (auth()->user()->role == 'learner') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $pendingCourses = Course::with('mentor')
             ->where('status', 'pending')
             ->latest()
             ->paginate(10);
 
-        return response()->json($pendingCourses);
+        return view('courses.pending-courses', compact('pendingCourses'));
     }
 
-    public function approve($courseId)
-    {
-        $course = Course::findOrFail($courseId);
 
+    // Approve a course
+    public function approve(Course $course)
+    {
         if ($course->status !== 'pending') {
-            return response()->json([
-                'message' => 'Course is not in pending state'
-            ], 400);
+            return back()->with('error', 'Course is not in pending state.');
         }
 
         $course->status = 'approved';
+
+        // Remove or comment out this line:
+        // $course->rejection_reason = null;
+
         $course->save();
 
-        // Notify mentor about course approval
-        $course->mentor->notify(new CourseApproved($course));
+        // Notify mentor (if notifications exist)
+        // if (method_exists($course->mentor, 'notify')) {
+        //     $course->mentor->notify(new CourseApproved($course));
+        // }
 
-        return response()->json([
-            'message' => 'Course approved successfully',
-            'course' => $course
-        ]);
+        return back()->with('success', 'Course approved successfully.');
     }
 
-    public function reject($courseId, Request $request)
+    // Reject a course with a reason
+    public function reject(Request $request, $courseId)
     {
-        $request->validate([
-            'reason' => 'required|string|max:1000'
-        ]);
-
         $course = Course::findOrFail($courseId);
 
-        if ($course->status !== 'pending') {
-            return response()->json([
-                'message' => 'Course is not in pending state'
-            ], 400);
-        }
-
-        $course->status = 'rejected';
-        $course->rejection_reason = $request->reason;
-        $course->save();
-
-        // Notify mentor about course rejection
-        $course->mentor->notify(new CourseRejected($course));
-
-        return response()->json([
-            'message' => 'Course rejected successfully',
-            'course' => $course
+        $course->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->input('reason'),
         ]);
+
+        return redirect()->route('courses.index')->with('success', 'Course rejected successfully.');
     }
+    public function rejectedCourses()
+{
+    $mentorId = Auth::id();
+    $rejectedCourses = Course::where('mentor_id', $mentorId)
+        ->whereNotNull('rejection_reason') // Fetch only rejected courses
+        ->get();
+
+    return view('courses.rejected', compact('rejectedCourses'));
+}
+
 }

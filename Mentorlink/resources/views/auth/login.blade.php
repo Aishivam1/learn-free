@@ -3,144 +3,38 @@
 @section('title', 'Login - MentorLink')
 
 @section('content')
-<div class="login-page">
-  <!-- 3D Cube Animation -->
-  <div class="cube">
-      <div class="face front"></div>
-      <div class="face back"></div>
-      <div class="face right"></div>
-      <div class="face left"></div>
-      <div class="face top"></div>
-      <div class="face bottom"></div>
-  </div>
-  <div class="container">
-      <h2>Login to MentorLink</h2>
-      <form method="POST" action="{{ route('login') }}">
-          @csrf
-          <input type="email" name="email" placeholder="Email" required>
-          <input type="password" name="password" placeholder="Password" required>
-          <button type="submit">Login</button>
-      </form>
-      <div class="register-link">
-          Don't have an account? <a href="{{ route('register') }}">Register</a>
-      </div>
-  </div>
-</div>
+    <div class="login-page">
+        <!-- 3D Cube Animation -->
+        <div class="cube">
+            <div class="face front"></div>
+            <div class="face back"></div>
+            <div class="face right"></div>
+            <div class="face left"></div>
+            <div class="face top"></div>
+            <div class="face bottom"></div>
+        </div>
+        <div class="container-1">
+            <h2>Login to MentorLink</h2>
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <div class="register-link">
+                Don't have an account? <a href="{{ route('register') }}">Register</a>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
-<style>
-/* Base styles for the login page */
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f7fa;
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    perspective: 800px;
-}
-
-/* Container styling for login */
-.login-page {
-    position: relative;
-}
-
-.container {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    width: 400px;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-}
-
-.container h2 {
-    margin-bottom: 20px;
-    color: #007bff;
-}
-
-.container form {
-    display: flex;
-    flex-direction: column;
-}
-
-.container form input {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.container form button {
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.container form button:hover {
-    background-color: #0056b3;
-}
-
-.container .register-link {
-    margin-top: 20px;
-    font-size: 14px;
-}
-
-.container .register-link a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-/* 3D Cube Animation */
-.cube {
-    width: 60px;
-    height: 60px;
-    position: absolute;
-    top: 10%;
-    right: 10%;
-    transform-style: preserve-3d;
-    animation: rotateCube 10s infinite linear;
-    z-index: 1;
-}
-
-.cube .face {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: rgba(0, 123, 255, 0.7);
-    border: 1px solid #fff;
-}
-
-.cube .front  { transform: translateZ(30px); }
-.cube .back   { transform: rotateY(180deg) translateZ(30px); }
-.cube .right  { transform: rotateY(90deg) translateZ(30px); }
-.cube .left   { transform: rotateY(-90deg) translateZ(30px); }
-.cube .top    { transform: rotateX(90deg) translateZ(30px); }
-.cube .bottom { transform: rotateX(-90deg) translateZ(30px); }
-
-@keyframes rotateCube {
-    from { transform: rotateX(0deg) rotateY(0deg); }
-    to { transform: rotateX(360deg) rotateY(360deg); }
-}
-</style>
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
 @endpush
 
+
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Login page loaded.');
-});
-</script>
+    <script>
+
+    </script>
 @endpush

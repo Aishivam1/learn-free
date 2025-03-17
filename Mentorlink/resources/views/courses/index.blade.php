@@ -9,16 +9,27 @@
         <div class="book book2"></div>
         <div class="book book3"></div>
     </div>
-    @if (Auth::user()->role === 'mentor')
-        <div class="create-course-container">
+    <div class="create-course-container">
+        @if (Auth::user()->role === 'learner')
+            <a href="{{ route(name: 'courses.my') }}" class="create-course-btn">My Course</a>
+        @endif
+        @if (Auth::user()->role === 'mentor')
             <a href="{{ route('courses.create') }}" class="create-course-btn">+ Create Course</a>
-        </div>
-    @endif
-
+            <a href="{{ route('courses.rejected') }}" class="back-btn">View Rejected Courses</a>
+        @endif
+        @if (Auth::user()->role !== 'learner')
+            <a href="{{ route('admin.courses.pending') }}" class="create-course-btn">Pending Courses</a>
+        @endif
+    </div>
 
     <section class="browse-courses">
         <h2>Browse Courses</h2>
-        <p>View all approved courses, filter by category, mentor, and difficulty.</p>
+        <p>View all approved courses, filter by category
+            @if (Auth::user()->role !== 'mentor')
+                , mentor,
+            @endif
+            and difficulty.
+        </p>
 
         <!-- Filters -->
         <div class="filters">
@@ -28,7 +39,8 @@
                     <option value="{{ $category }}">{{ $category }}</option>
                 @endforeach
             </select>
-            @if (Auth::user()->role !== 'mentor') <select id="mentor-filter">
+            @if (Auth::user()->role !== 'mentor')
+                <select id="mentor-filter">
                     <option value="">Mentor</option>
                     @foreach ($mentors as $mentor)
                         <option value="{{ $mentor }}">{{ $mentor }}</option>
@@ -49,34 +61,80 @@
                 <div class="course" data-category="{{ $course->category }}" data-mentor="{{ $course->mentor->name }}"
                     data-difficulty="{{ $course->difficulty }}">
 
+                    <!-- Delete Button (Only for the course creator) -->
+                    @if (Auth::user()->role === 'mentor' && Auth::id() === $course->mentor_id)
+                        <form action="{{ route('courses.destroy', $course->id) }}" method="POST" class="delete-form">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="delete-btn">✖</button>
+                        </form>
+                    @endif
+
                     <div class="content">
                         <h3>{{ $course->title }}</h3>
                         <p>{{ $course->description }}</p>
                         <div class="author">By {{ $course->mentor->name }}</div>
                     </div>
                     <div class="badge">{{ $course->difficulty }}</div>
-
+                    @if (Auth::user()->role === 'mentor' && Auth::user()->id === $course->mentor_id)
+                        <a href="{{ route('courses.quiz.create', $course->id) }}" class="create-course-btn">
+                            <i class="fas fa-plus"></i>Add Quiz
+                        </a>
+                    @endif
                     <!-- View Button -->
-                    <a href="{{ route('courses.show', $course->id) }}" class="view-btn">View Details</a>
+                    <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'browse']) }}"
+                        class="view-btn">View Details</a>
 
                     <!-- Enroll Button -->
-                    @if (Auth::user()->role == 'learner')
-                        <form action="{{ route('courses.enroll', $course->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="enroll-btn">Enroll</button>
-                        </form>
+                    @if (Auth::user()->role == 'mentor' && Auth::id() === $course->mentor_id)
+                        <!-- Update Button for Mentors -->
+                        <a href="{{ route('courses.edit', $course->id) }}" class="enroll-btn">Update</a>
+                    @elseif (Auth::user()->role == 'learner')
+                        @php
+                            $isEnrolled = $course->enrollments()->where('user_id', Auth::id())->exists();
+                        @endphp
+
+                        @if ($isEnrolled)
+                            <button class="enroll-btn enrolled" disabled>Already Enrolled</button>
+                        @else
+                            <form action="{{ route('courses.enroll', $course->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="enroll-btn">Enroll</button>
+                            </form>
+                        @endif
                     @endif
                 </div>
-
             @empty
                 <p>No courses available at this time.</p>
             @endforelse
         </div>
+
     </section>
 @endsection
 
 @push('styles')
     <style>
+        /* Delete Button */
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+            z-index: 10;
+        }
+
+        .delete-btn:hover {
+            background: darkred;
+        }
+
         .create-course-container {
             position: absolute;
             right: 0px;
@@ -91,8 +149,10 @@
             background-color: #007bff;
             border-radius: 8px;
             text-decoration: none;
+            text-align: center;
             transition: background-color 0.3s ease-in-out;
             box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
+            margin-bottom: 35px;
         }
 
         .create-course-btn:hover {
@@ -162,8 +222,8 @@
 
         /* Course Content */
         .course .content {
-            padding: 20px;
-            padding-bottom: 80px;
+            padding: 40px 20px 80px;
+            /* Increased top padding */
             position: relative;
         }
 
@@ -188,13 +248,15 @@
         /* Difficulty Badge */
         .course .badge {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 10px;
+            left: 10px;
             background-color: #007bff;
             color: #fff;
             padding: 5px 10px;
             border-radius: 5px;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 5;
         }
 
         /* View Details Button */
@@ -221,7 +283,7 @@
 
         .view-btn:hover {
             /* background-color: #007bff;
-                        color: white; */
+                                                                                                    color: white; */
             transform: translateX(-50%) translateY(-2px);
         }
 
@@ -243,6 +305,17 @@
             text-align: center;
             transition: background-color 0.3s ease-in-out;
             box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
+        }
+
+        .back-btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease-in-out, transform 0.2s;
         }
 
         .enroll-btn:hover {
@@ -275,6 +348,29 @@
 
 @push('scripts')
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault(); // Stop the form from submitting immediately
+
+                    Swal.fire({
+                        title: "Are you sure?",
+                        text: "This action cannot be undone!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#d33",
+                        cancelButtonColor: "#3085d6",
+                        confirmButtonText: "Yes, delete it!",
+                        cancelButtonText: "Cancel"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit(); // Submit the form if the user confirms
+                        }
+                    });
+                });
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log("Browse Courses page loaded.");
 

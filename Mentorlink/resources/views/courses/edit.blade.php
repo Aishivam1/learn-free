@@ -1,98 +1,224 @@
-@extends('layouts.mentor')
+@extends('layouts.app')
 
-@section('title', 'Edit Course')
+@section('title', 'Edit Course - MentorLink')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Edit Course</h1>
+    <div class="create-course-page">
+        <div class="container">
+            <h2>Edit Course</h2>
 
-    <!-- Added "edit-course-card" class for animation and hover effects -->
-    <form action="{{ route('courses.update', $course->id) }}" method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-6 transform transition-transform duration-300 hover:scale-105 edit-course-card">
-        @csrf
-        @method('PUT')
-
-        <div class="mb-6">
-            <label for="title" class="block text-sm font-medium text-gray-700">Course Title</label>
-            <input type="text" name="title" id="title" value="{{ $course->title }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-        </div>
-
-        <div class="mb-6">
-            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-            <textarea name="description" id="description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ $course->description }}</textarea>
-        </div>
-
-        <div class="mb-6">
-            <label for="thumbnail" class="block text-sm font-medium text-gray-700">Course Thumbnail</label>
-            @if($course->thumbnail)
-                <img src="{{ asset($course->thumbnail) }}" alt="Current thumbnail" class="w-32 h-32 object-cover mb-2">
+            <!-- Display validation errors -->
+            @if ($errors->any())
+                <div class="error-message">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
-            <input type="file" name="thumbnail" id="thumbnail" class="mt-1 block w-full">
-        </div>
 
-        <div class="mb-6">
-            <label for="duration" class="block text-sm font-medium text-gray-700">Duration (hours)</label>
-            <input type="number" name="duration" id="duration" value="{{ $course->duration }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-        </div>
+            <form method="POST" action="{{ route('courses.update', $course->id) }}" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
 
-        <div class="mb-6">
-            <label for="difficulty" class="block text-sm font-medium text-gray-700">Difficulty Level</label>
-            <select name="difficulty" id="difficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option value="beginner" {{ $course->difficulty == 'beginner' ? 'selected' : '' }}>Beginner</option>
-                <option value="intermediate" {{ $course->difficulty == 'intermediate' ? 'selected' : '' }}>Intermediate</option>
-                <option value="advanced" {{ $course->difficulty == 'advanced' ? 'selected' : '' }}>Advanced</option>
-            </select>
-        </div>
+                <input type="text" name="title" placeholder="Course Title" value="{{ old('title', $course->title) }}"
+                    required>
+                @error('title')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
 
-        <div class="flex justify-end space-x-4">
-            <a href="{{ route('courses.show', $course->id) }}" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-transform duration-300">
-                Cancel
-            </a>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-transform duration-300">
-                Update Course
-            </button>
+                <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description', $course->description) }}</textarea>
+                @error('description')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <select name="category" required>
+                    <option value="" disabled>Select Category</option>
+                    <option value="Web Development"
+                        {{ old('category', $course->category) == 'Web Development' ? 'selected' : '' }}>Web Development
+                    </option>
+                    <option value="Data Science"
+                        {{ old('category', $course->category) == 'Data Science' ? 'selected' : '' }}>Data Science</option>
+                    <option value="Design" {{ old('category', $course->category) == 'Design' ? 'selected' : '' }}>Design
+                    </option>
+                    <option value="Business" {{ old('category', $course->category) == 'Business' ? 'selected' : '' }}>
+                        Business</option>
+                </select>
+                @error('category')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <select name="difficulty" required>
+                    <option value="" disabled>Select Difficulty</option>
+                    <option value="Beginner" {{ old('difficulty', $course->difficulty) == 'Beginner' ? 'selected' : '' }}>
+                        Beginner</option>
+                    <option value="Intermediate"
+                        {{ old('difficulty', $course->difficulty) == 'Intermediate' ? 'selected' : '' }}>Intermediate
+                    </option>
+                    <option value="Advanced" {{ old('difficulty', $course->difficulty) == 'Advanced' ? 'selected' : '' }}>
+                        Advanced</option>
+                </select>
+                @error('difficulty')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <!-- Upload multiple videos -->
+                <label>Upload Course Videos:</label>
+                <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
+                <ul id="videoList">
+                    <span id="existingVideoList">
+                        @foreach ($course->materials->where('type', 'video') as $video)
+                            <li>{{ $video->name }}</li>
+                        @endforeach
+                    </span>
+                </ul>
+                @error('videos')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <!-- Upload New PDFs -->
+                <label>Upload Course PDFs:</label>
+                <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
+                <ul id="pdfList">
+                    <span id="existingPdfList">
+                        @foreach ($course->materials->where('type', 'pdf') as $pdf)
+                            <li>{{ $pdf->name }}</li>
+                        @endforeach
+                    </span>
+                </ul>
+                @error('pdfs')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <button type="submit">Update Course</button>
+            </form>
+
+            <div class="back-link">
+                <a href="{{ route('courses.index') }}">Back to All Course</a>
+            </div>
         </div>
-    </form>
-</div>
+    </div>
 @endsection
 
-@section('scripts')
-<script>
-    // Animate the container on page load
-    gsap.from(".container", {
-        opacity: 0,
-        y: 50,
-        duration: 1,
-        ease: "power2.out"
-    });
+@push('styles')
+    <style>
+        /* Same styles as create.blade.php */
+        .create-course-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+            padding: 20px 0;
+        }
 
-    // Animate the header with a bounce effect
-    gsap.from("h1", {
-        opacity: 0,
-        y: -30,
-        duration: 1,
-        ease: "bounce.out"
-    });
+        .create-course-page .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
 
-    // Add a subtle 3D hover effect to the Update Course button
-    const updateButton = document.querySelector("button[type='submit']");
-    if (updateButton) {
-        updateButton.addEventListener("mouseenter", () => {
-            gsap.to(updateButton, { duration: 0.3, scale: 1.05, rotationY: 5 });
-        });
-        updateButton.addEventListener("mouseleave", () => {
-            gsap.to(updateButton, { duration: 0.3, scale: 1, rotationY: 0 });
-        });
-    }
+        .create-course-page .container h2 {
+            margin-bottom: 20px;
+            color: #007bff;
+        }
 
-    // Optional: Add a hover scaling effect to the entire form card
-    const editCourseCard = document.querySelector(".edit-course-card");
-    if (editCourseCard) {
-        editCourseCard.addEventListener("mouseenter", () => {
-            gsap.to(editCourseCard, { duration: 0.3, scale: 1.02 });
+        .create-course-page .container form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .create-course-page .container form input,
+        .create-course-page .container form textarea,
+        .create-course-page .container form select {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .create-course-page .container form button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .existing-files {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .existing-files li {
+            margin: 5px 0;
+        }
+
+        .existing-files a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .existing-files a:hover {
+            text-decoration: underline;
+        }
+
+
+        .create-course-page .container form button:hover {
+            background-color: #0056b3;
+        }
+
+        .create-course-page .back-link {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .create-course-page .back-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .create-course-page .error-message {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function displayFileNames(input, listElementId, existingListElementId) {
+                const fileList = document.getElementById(listElementId);
+                const existingList = document.getElementById(existingListElementId);
+
+                // Keep existing files in the list
+                fileList.innerHTML = existingList ? existingList.innerHTML : "";
+
+                if (input.files.length > 0) {
+                    for (let i = 0; i < input.files.length; i++) {
+                        let li = document.createElement("li");
+                        li.textContent = input.files[i].name;
+                        fileList.appendChild(li);
+                    }
+                }
+            }
+
+            document.getElementById('videoUpload').addEventListener('change', function() {
+                displayFileNames(this, 'videoList', 'existingVideoList');
+            });
+
+            document.getElementById('pdfUpload').addEventListener('change', function() {
+                displayFileNames(this, 'pdfList', 'existingPdfList');
+            });
         });
-        editCourseCard.addEventListener("mouseleave", () => {
-            gsap.to(editCourseCard, { duration: 0.3, scale: 1 });
-        });
-    }
-</script>
-@endsection
+    </script>
+@endpush

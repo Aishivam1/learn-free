@@ -1,80 +1,249 @@
-@extends('layouts.learner')
+@extends('layouts.app')
+
+@push('styles')
+    <style>
+        /* General styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .bg-white {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .result-image {
+            display: block;
+            margin: 10px auto;
+            width: 150px;
+            height: auto;
+        }
+
+        .text-green-600 {
+            color: #d6dfe9;
+        }
+
+        .text-red-600 {
+            color: red;
+        }
+
+        .rounded-md {
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .gh {
+            background-color: #0056b3;
+            color: white;
+            align-items: center;
+            justify-content: center;
+            display: flex;
+        }
+    </style>
+@endpush
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg p-8">
-            <h1 class="text-3xl font-bold mb-6">Quiz Results</h1>
+    {{-- Confetti Canvas for Celebration --}}
+    @if ($score >= $quiz->passing_score)
+        <canvas id="confetti-canvas"></canvas>
+    @endif
 
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xl">Final Score:</span>
-                    <span class="text-2xl font-bold {{ $score >= $quiz->passing_score ? 'text-green-600' : 'text-red-600' }}">
-                        {{ $score }}%
-                    </span>
+    {{-- Sad Falling Emojis if Failed --}}
+    @if ($score < $quiz->passing_score)
+        <canvas id="sad-canvas"></canvas>
+    @endif
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h1 class="text-3xl font-bold mb-6">Quiz Results</h1>
+
+                {{-- Display Image Based on Score --}}
+                @if ($score >= $quiz->passing_score)
+                    <img src="{{ asset('images/pass.png') }}" alt="Passed" class="result-image">
+                @else
+                    <img src="{{ asset('images/fail.png') }}" alt="Failed" class="result-image">
+                @endif
+
+                {{-- Score & Grade --}}
+                <div class="mb-8">
+                    <div class="gh">
+                        <span class="text-xl">Final Score:</span>
+                        <span
+                            class="text-2xl font-bold {{ $score >= $quiz->passing_score ? 'text-green-600' : 'text-red-600' }}">
+                            {{ $score }}%
+                        </span>
+                    </div>
+
+                    {{-- Determine Grade Dynamically --}}
+                    @php
+                        if ($score >= 90) {
+                            $grade = 'A+';
+                            $gradeClass = 'grade-Aplus';
+                            $message = "🎉 Excellent! You're a top performer!";
+                        } elseif ($score >= 80) {
+                            $grade = 'A';
+                            $gradeClass = 'grade-A';
+                            $message = '👍 Very Good! Keep up the great work!';
+                        } elseif ($score >= 70) {
+                            $grade = 'B';
+                            $gradeClass = 'grade-B';
+                            $message = '✅ Good effort! Keep pushing.';
+                        } elseif ($score >= 60) {
+                            $grade = 'C';
+                            $gradeClass = 'grade-C';
+                            $message = '💡 Fair try! You can improve.';
+                        } elseif ($score >= 50) {
+                            $grade = 'D';
+                            $gradeClass = 'grade-D';
+                            $message = '📚 Needs improvement. Study more.';
+                        } else {
+                            $grade = 'F';
+                            $gradeClass = 'grade-F';
+                            $message = "❌ Failed. Don't give up!";
+                        }
+                    @endphp
+
+                    {{-- Display Grade --}}
+                    <div class="grade-box {{ $gradeClass }}">
+                        Grade: {{ $grade }} <br>
+                        {{ $message }}
+                    </div>
                 </div>
 
-                @if($score >= $quiz->passing_score)
-                    <div class="bg-green-100 text-green-700 p-4 rounded-md">
-                        Congratulations! You've passed the quiz.
-                    </div>
-                @else
-                    <div class="bg-red-100 text-red-700 p-4 rounded-md">
-                        Unfortunately, you didn't reach the passing score. Keep studying and try again!
-                    </div>
-                @endif
-            </div>
+                {{-- Retake Quiz Button for Failing Users --}}
+                <div class="mt-8 flex justify-between">
+                    @if ($score < $quiz->passing_score)
+                        <a href="{{ route('quizzes.show', $quiz->id) }}" class="btn">
+                            Retry Quiz
+                        </a>
+                    @endif
 
-            <div class="space-y-8">
-                @foreach($answers as $index => $answer)
-                <div class="border-t pt-6">
-                    <h3 class="text-lg font-semibold mb-3">Question {{ $index + 1 }}</h3>
-                    <p class="text-gray-700 mb-4">{{ $answer->question->content }}</p>
-
-                    <div class="space-y-3">
-                        @foreach($answer->question->options as $option)
-                            <div class="flex items-start space-x-3">
-                                <div class="w-6 h-6 flex items-center justify-center">
-                                    @if($option->id === $answer->selected_option_id)
-                                        @if($option->is_correct)
-                                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        @else
-                                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </div>
-                                <span class="text-gray-700 {{ $option->is_correct ? 'font-semibold' : '' }}">
-                                    {{ $option->content }}
-                                </span>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    @if(!$answer->is_correct && $answer->question->explanation)
-                        <div class="mt-4 bg-blue-50 p-4 rounded-md">
-                            <h4 class="font-semibold text-blue-800 mb-2">Explanation:</h4>
-                            <p class="text-blue-700">{{ $answer->question->explanation }}</p>
-                        </div>
+                    {{-- Generate Certificate Button (Only if Passed and Course Completed) --}}
+                    @if ($score >= $quiz->passing_score && $courseCompleted)
+                        <a href="{{ route('certificate.generate', $course->id) }}" class="btn btn-primary">
+                            Generate Certificate
+                        </a>
                     @endif
                 </div>
-                @endforeach
-            </div>
-
-            <div class="mt-8 flex justify-between">
-                <a href="{{ route('modules.show', $quiz->module_id) }}" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                    Back to Module
-                </a>
-                @if($score < $quiz->passing_score)
-                    <a href="{{ route('quizzes.show', $quiz->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-                        Retry Quiz
-                    </a>
-                @endif
             </div>
         </div>
     </div>
-</div>
 @endsection
+
+{{-- Confetti Animation --}}
+@push('scripts')
+    @if ($score >= $quiz->passing_score)
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const duration = 5000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 3,
+                        spread: 120,
+                        origin: {
+                            y: 0.6
+                        }
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                })();
+            });
+        </script>
+    @endif
+
+    @if ($score < $quiz->passing_score)
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const canvas = document.getElementById("sad-canvas");
+                const ctx = canvas.getContext("2d");
+
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const emojis = ["😢", "💔", "😭"];
+                const particles = [];
+
+                class Particle {
+                    constructor(x, y, emoji) {
+                        this.x = x;
+                        this.y = y;
+                        this.emoji = emoji;
+                        this.speed = Math.random() * 2 + 1;
+                    }
+
+                    update() {
+                        this.y += this.speed;
+                    }
+
+                    draw() {
+                        ctx.font = "30px Arial";
+                        ctx.fillText(this.emoji, this.x, this.y);
+                    }
+                }
+
+                function createParticles() {
+                    for (let i = 0; i < 15; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * -canvas.height;
+                        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                        particles.push(new Particle(x, y, emoji));
+                    }
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.forEach((particle) => {
+                        particle.update();
+                        particle.draw();
+                    });
+                    requestAnimationFrame(animate);
+                }
+
+                createParticles();
+                animate();
+            });
+        </script>
+    @endif
+@endpush

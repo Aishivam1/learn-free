@@ -7,9 +7,21 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\File;
 
 class ProfileController extends Controller
 {
+    public function edit()
+    {
+        $user = auth()->user();
+
+        // Fetch available avatars dynamically from public/avatar/
+        $avatarPath = public_path('avatar');
+        $avatars = array_diff(scandir($avatarPath), array('..', '.')); // Get all files e
+
+        return view('profile.edit', compact('user', 'avatars'));
+    }
+
     public function viewProfile($userId)
     {
         $user = User::with(['enrollments', 'badges', 'certificates'])
@@ -19,33 +31,33 @@ class ProfileController extends Controller
             'user' => $user
         ]);
     }
-
     public function updateProfile(Request $request)
     {
+        // Fetch available avatars dynamically
+        $avatarPath = public_path('avatar/');
+        $availableAvatars = File::exists($avatarPath) ? array_diff(scandir($avatarPath), ['.', '..']) : [];
+
         $validator = Validator::make($request->all(), [
-            'name' => 'string|max:255',
+            'name' => 'nullable|string|max:255',
             'bio' => 'nullable|string|max:1000',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'avatar' => 'required|in:' . implode(',', $availableAvatars) // Validate from actual files
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $user = $request->user();
 
-        if ($request->hasFile('avatar')) {
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $avatarPath;
+        // Update avatar only if a valid one is selected
+        if ($request->has('avatar') && in_array($request->avatar, $availableAvatars)) {
+            $user->avatar = $request->avatar;
         }
 
         $user->fill($request->only(['name', 'bio']));
         $user->save();
 
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ]);
+        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
     public function updatePassword(Request $request)

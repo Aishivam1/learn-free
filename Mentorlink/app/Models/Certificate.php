@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Certificate extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'course_id',
@@ -16,7 +19,6 @@ class Certificate extends Model
     protected $casts = [
         'issued_at' => 'datetime'
     ];
-
     public function user()
     {
         return $this->belongsTo(User::class);

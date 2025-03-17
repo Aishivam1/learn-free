@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\Learning\EnrollmentController;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Course\CourseController;
+use App\Http\Controllers\Learning\EnrollmentController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Learning\QuizController;
@@ -15,24 +16,36 @@ use App\Http\Controllers\Feedback\FeedbackController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\HomeController;
 
+use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\Course\CourseApprovalController;
+use App\Http\Controllers\Learning\ProgressController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
 
-// Public routes
+// 🔹 PUBLIC ROUTES
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
-Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/mentors', [HomeController::class, 'mentors'])->name('mentors');
 
-// Course preview routes
+// 🔹 Informational Pages
+Route::view('/careers', 'careers')->name('careers');
+Route::view('/press', 'press')->name('press');
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::view('/help-center', 'help-center')->name('help-center');
+Route::view('/terms-of-service', 'terms-of-service')->name('terms-of-service');
+Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');
+Route::view('/faq', 'faq')->name('faq');
+
+// 🔹 COURSE PREVIEW ROUTES
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 Route::get('/courses/{course}/preview', [CourseController::class, 'preview'])->name('courses.preview');
 
-// Authentication routes
+// 🔹 AUTHENTICATION ROUTES
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
@@ -44,55 +57,62 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// Protected routes
+// 🔹 PROTECTED ROUTES (Authenticated Users)
 Route::middleware(['auth'])->group(function () {
-    // Auth
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Profile Management
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::delete('/profile/delete', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Learning
+    // Learning Management
+    Route::post('/courses/{course}/progress', [CourseController::class, 'updateProgress'])->name('course.progress');
+    Route::post('/mark-course-complete', [ProgressController::class, 'markCourseComplete'])->name('progress.complete');
     Route::get('/my-courses', [CourseController::class, 'myCourses'])->name('courses.my');
+    Route::get('/course/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::post('/courses/store', [CourseController::class, 'store'])->name('courses.store');
+    Route::get('/mentor/courses/rejected', [CourseController::class, 'rejectedCourses'])->name('courses.rejected');
+    Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
     Route::get('/course/{course}/learn', [CourseController::class, 'learn'])->name('courses.learn');
     Route::post('/courses/{id}/enroll', [EnrollmentController::class, 'enroll'])->name('courses.enroll');
+    Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+    Route::delete('/courses/{id}', [CourseController::class, 'destroy'])->name('courses.destroy');
     Route::delete('/course/{course}/unenroll', [EnrollmentController::class, 'unenroll'])->name('courses.unenroll');
     Route::post('/course/{course}/progress', [CourseController::class, 'updateProgress'])->name('courses.progress');
 
-    // Quizzes
+    // Quiz Management
+    Route::get('/courses/{id}/quiz/create', [QuizController::class, 'create'])->name('courses.quiz.create');
+    Route::post('/courses/{id}/quiz', [QuizController::class, 'store'])->name('quiz.store');
     Route::get('/course/{course}/quizzes', [QuizController::class, 'index'])->name('quizzes.index');
     Route::get('/course/{course}/quiz/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
-    Route::post('/quiz/{quiz}/attempt', [QuizController::class, 'attempt'])->name('quizzes.attempt');
+    Route::post('/quiz/{quiz}/attempt', [QuizController::class, 'attempt'])->name('quiz.attempt');
     Route::get('/quiz/{quiz}/results', [QuizController::class, 'results'])->name('quizzes.results');
 
-    // Discussions
-    Route::get('/course/{course}/discussions', [DiscussionController::class, 'index'])->name('discussions.index');
-    Route::post('/course/{course}/discussions', [DiscussionController::class, 'store'])->name('discussions.store');
-    Route::get('/discussions/{discussion}', [DiscussionController::class, 'show'])->name('discussions.show');
-    Route::put('/discussions/{discussion}', [DiscussionController::class, 'update'])->name('discussions.update');
-    Route::delete('/discussions/{discussion}', [DiscussionController::class, 'destroy'])->name('discussions.destroy');
-    Route::post('/discussions/{discussion}/replies', [DiscussionController::class, 'reply'])->name('discussions.reply');
-    Route::post('/discussions/{discussion}/like', [DiscussionController::class, 'like'])->name('discussions.like');
-    Route::delete('/discussions/{discussion}/unlike', [DiscussionController::class, 'unlike'])->name('discussions.unlike');
-    Route::post('/discussions/replies/{reply}/solution', [DiscussionController::class, 'markSolution'])->name('discussions.solution');
+    // Material Access
+    Route::get('/materials/video/{id}', [MaterialController::class, 'streamVideo'])->name('materials.video');
+    Route::get('/materials/pdf/{id}', [MaterialController::class, 'viewPdf'])->name('materials.pdf');
 
-    // Badges & Leaderboard
-    Route::get('/badges', [BadgeController::class, 'index'])->name('badges.index');
-    Route::get('/my-badges', [BadgeController::class, 'userBadges'])->name('badges.my');
+    // Discussion System
+    Route::get('/discussion/{courseId}', [DiscussionController::class, 'listByCourse'])->name('discussion.index');
+    Route::get('/discussion/{courseId}/create', [DiscussionController::class, 'showCreateForm'])->name('discussion.create');
+    Route::post('/discussion/{course}/create', [DiscussionController::class, 'create'])->name('discussions.store');
+    Route::get('/discussion/{id}', [DiscussionController::class, 'show'])->name('discussion.show');
+    Route::post('/discussion/{id}/reply', [DiscussionController::class, 'reply'])->name('discussion.reply');
+    Route::post('/discussion/{id}/like', [DiscussionController::class, 'toggleLike'])->name('discussion.like');
+
+    // Leaderboard & Badges
     Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard');
-    Route::get('/leaderboard/weekly', [LeaderboardController::class, 'weekly'])->name('leaderboard.weekly');
-    Route::get('/leaderboard/monthly', [LeaderboardController::class, 'monthly'])->name('leaderboard.monthly');
+    Route::get('/my-badges', [BadgeController::class, 'userBadges'])->name('badges.index');
 
     // Certificates
-    Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
-    Route::get('/certificates/{certificate}', [CertificateController::class, 'download'])->name('certificates.download');
+    Route::get('/certificate/generate/{courseId}', [CertificateController::class, 'generate'])->name('certificate.generate');
+    Route::get('/certificate/download/{courseId}', [CertificateController::class, 'download'])->name('certificate.download');
+    Route::get('/my-certificates', [CertificateController::class, 'index'])->name('certificates.index');
 
     // Feedback
     Route::post('/course/{course}/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
@@ -100,32 +120,13 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/feedback/{feedback}', [FeedbackController::class, 'update'])->name('feedback.update');
     Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
 
-    // Mentor routes
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/mentor/courses', [CourseController::class, 'mentorCourses'])->name('mentor.courses');
-        Route::get('/mentor/courses/create', [CourseController::class, 'create'])->name('courses.create');
-        Route::post('/mentor/courses', [CourseController::class, 'store'])->name('courses.store');
-        Route::get('/mentor/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
-        Route::put('/mentor/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
-        Route::delete('/mentor/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
-        Route::post('/mentor/courses/{course}/publish', [CourseController::class, 'publish'])->name('courses.publish');
-        Route::post('/mentor/courses/{course}/unpublish', [CourseController::class, 'unpublish'])->name('courses.unpublish');
-        Route::get('/mentor/students', [DashboardController::class, 'students'])->name('mentor.students');
-
-        // Mentor Quiz Management
-        Route::post('/course/{course}/quizzes', [QuizController::class, 'store'])->name('quizzes.store');
-        Route::put('/quizzes/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
-        Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
-    });
-
-    // Admin routes
-    Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-        // ✅ Course Approval
-        Route::get('/courses', [AdminController::class, 'pendingCourses'])->name('courses.pending');
+    // Admin Routes
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/courses/pending', [CourseApprovalController::class, 'listPendingCourses'])->name('courses.pending');
+        Route::put('/courses/{course}/approve', [CourseApprovalController::class, 'approve'])->name('courses.approve');
+        Route::put('/courses/{course}/reject', [CourseApprovalController::class, 'reject'])->name('courses.reject');
         Route::get('/analytics', [AdminController::class, 'analytics'])->name('analytics');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
-        Route::post('/courses/{course}/approve', [AdminController::class, 'approveCourse'])->name('courses.approve');
-        Route::post('/courses/{course}/reject', [AdminController::class, 'rejectCourse'])->name('courses.reject');
         Route::get('/feedback', [AdminController::class, 'feedback'])->name('feedback');
         Route::post('/feedback/{feedback}/feature', [AdminController::class, 'featureFeedback'])->name('feedback.feature');
         Route::get('/reports', [AdminController::class, 'reports'])->name('reports');

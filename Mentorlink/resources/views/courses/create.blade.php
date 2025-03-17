@@ -1,80 +1,182 @@
-@extends('layouts.mentor')
+@extends('layouts.app')
 
-@section('title', 'Create New Course')
+@section('title', 'Create Course - MentorLink')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Create New Course</h1>
+    <div class="create-course-page">
+        <div class="container">
+            <h2>Create a New Course</h2>
 
-    <!-- Added hover effect on the form container -->
-    <form action="{{ route('courses.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-6 transform transition-transform duration-300 hover:scale-105">
-        @csrf
-        <div class="mb-6">
-            <label for="title" class="block text-sm font-medium text-gray-700">Course Title</label>
-            <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-        </div>
+            <!-- Display validation errors -->
+            @if ($errors->any())
+                <div class="error-message">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-        <div class="mb-6">
-            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-            <textarea name="description" id="description" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
-        </div>
+            <form method="POST" action="{{ route('courses.store') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="text" name="title" placeholder="Course Title" value="{{ old('title') }}" required>
+                @error('title')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
 
-        <div class="mb-6">
-            <label for="thumbnail" class="block text-sm font-medium text-gray-700">Course Thumbnail</label>
-            <input type="file" name="thumbnail" id="thumbnail" class="mt-1 block w-full">
-        </div>
+                <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description') }}</textarea>
+                @error('description')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
 
-        <div class="mb-6">
-            <label for="duration" class="block text-sm font-medium text-gray-700">Duration (hours)</label>
-            <input type="number" name="duration" id="duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-        </div>
+                <select name="category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <option value="Web Development" {{ old('category') == 'Web Development' ? 'selected' : '' }}>Web
+                        Development</option>
+                    <option value="Data Science" {{ old('category') == 'Data Science' ? 'selected' : '' }}>Data Science
+                    </option>
+                    <option value="Design" {{ old('category') == 'Design' ? 'selected' : '' }}>Design</option>
+                    <option value="Business" {{ old('category') == 'Business' ? 'selected' : '' }}>Business</option>
+                </select>
+                @error('category')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
 
-        <div class="mb-6">
-            <label for="difficulty" class="block text-sm font-medium text-gray-700">Difficulty Level</label>
-            <select name="difficulty" id="difficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-            </select>
-        </div>
+                <select name="difficulty" required>
+                    <option value="" disabled selected>Select Difficulty</option>
+                    <option value="Beginner" {{ old('difficulty') == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                    <option value="Intermediate" {{ old('difficulty') == 'Intermediate' ? 'selected' : '' }}>Intermediate
+                    </option>
+                    <option value="Advanced" {{ old('difficulty') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                </select>
+                @error('difficulty')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
 
-        <div class="flex justify-end">
-            <!-- Added GSAP 3D hover effect on the button -->
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transform transition-transform duration-300">
-                Create Course
-            </button>
+                <!-- Upload multiple videos -->
+                <label>Upload Course Videos:</label>
+                <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
+                <ul id="videoList"></ul>
+                @error('videos')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <!-- Upload multiple PDFs -->
+                <label>Upload Course PDFs:</label>
+                <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
+                <ul id="pdfList"></ul>
+                @error('pdfs')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+
+                <button type="submit">Submit for Approval</button>
+            </form>
+
+            <div class="back-link">
+                <a href="{{ route('courses.index') }}">Back to All Course</a>
+            </div>
         </div>
-    </form>
-</div>
+    </div>
 @endsection
 
-@section('scripts')
-<script>
-    // Animate the container on page load
-    gsap.from(".container", {
-        opacity: 0,
-        y: 50,
-        duration: 1,
-        ease: "power2.out"
-    });
+@push('styles')
+    <style>
+        /* Apply styles only within the Create Course page */
+        .create-course-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+            /* Adjust height based on header/footer */
+            padding: 20px 0;
+            /* Reduced padding to minimize extra space */
+        }
 
-    // Animate the header (Create New Course) with a bounce effect
-    gsap.from("h1", {
-        opacity: 0,
-        y: -30,
-        duration: 1,
-        ease: "bounce.out"
-    });
+        .create-course-page .container {
+            background-color: #fff;
+            padding: 30px;
+            /* Reduce padding inside the form */
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
 
-    // Add a subtle 3D hover effect to the submit button
-    const submitButton = document.querySelector("button[type='submit']");
-    if (submitButton) {
-        submitButton.addEventListener("mouseenter", () => {
-            gsap.to(submitButton, { duration: 0.3, scale: 1.05, rotationY: 5 });
+
+        .create-course-page .container h2 {
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+
+        .create-course-page .container form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .create-course-page .container form input,
+        .create-course-page .container form textarea,
+        .create-course-page .container form select {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .create-course-page .container form button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .create-course-page .container form button:hover {
+            background-color: #0056b3;
+        }
+
+        .create-course-page .back-link {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .create-course-page .back-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .create-course-page .error-message {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+@endpush
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function displayFileNames(input, listElementId) {
+                const fileList = document.getElementById(listElementId);
+                fileList.innerHTML = ""; // Clear previous list
+                if (input.files.length > 0) {
+                    for (let i = 0; i < input.files.length; i++) {
+                        let li = document.createElement("li");
+                        li.textContent = input.files[i].name;
+                        fileList.appendChild(li);
+                    }
+                }
+            }
+
+            document.getElementById('videoUpload').addEventListener('change', function() {
+                displayFileNames(this, 'videoList');
+            });
+
+            document.getElementById('pdfUpload').addEventListener('change', function() {
+                displayFileNames(this, 'pdfList');
+            });
         });
-        submitButton.addEventListener("mouseleave", () => {
-            gsap.to(submitButton, { duration: 0.3, scale: 1, rotationY: 0 });
-        });
-    }
-</script>
-@endsection
+    </script>
+@endpush

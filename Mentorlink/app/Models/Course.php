@@ -13,6 +13,8 @@ class Course extends Model
         'mentor_id',
         'title',
         'description',
+        'category', // ✅ Ensure category is fillable
+        'difficulty',
         'status', // pending, approved
         'video_required' // if true, videos must be watched in sequence
     ];
@@ -29,13 +31,17 @@ class Course extends Model
         return $this->belongsTo(User::class, 'mentor_id');
     }
 
+    public function quizAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
 
     // Access instructor name dynamically
     public function getInstructorAttribute()
     {
         return $this->mentor ? $this->mentor->name : 'Unknown Mentor';
     }
-    
+
 
     public function materials()
     {
@@ -72,7 +78,6 @@ class Course extends Model
     {
         return $this->hasMany(Discussion::class);
     }
-
     public function feedback()
     {
         return $this->hasMany(Feedback::class);
@@ -126,6 +131,4 @@ class Course extends Model
     {
         return $this->learners()->count();
     }
-
-
 }

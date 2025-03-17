@@ -9,18 +9,20 @@ class QuizAttempt extends Model
 {
     use HasFactory;
 
+    public $timestamps = false; // ✅ Disable default timestamps
+
     protected $fillable = [
         'user_id',
-        'quiz_id',
+        'course_id',
         'score',
-        'status'
+        'passed',
+        'attempted_at' // ✅ Add this field to allow manual timestamping
     ];
 
     protected $casts = [
         'score' => 'integer',
-        'status' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'passed' => 'boolean',
+        'attempted_at' => 'datetime', // ✅ Ensure Laravel treats this as a date field
     ];
 
     // Relationships
@@ -37,25 +39,24 @@ class QuizAttempt extends Model
     // Scopes
     public function scopePassed($query)
     {
-        return $query->where('status', true);
+        return $query->where('passed', true);
     }
 
     public function scopeFailed($query)
     {
-        return $query->where('status', false);
+        return $query->where('passed', false);
     }
 
     // Helper methods
     public function isPassed()
     {
-        return $this->status;
+        return $this->passed;
     }
 
     public function canRetake()
     {
-        if ($this->status) return false;
+        if ($this->passed) return false;
 
-        // Check if there's a waiting period between attempts
         $lastAttempt = self::where('user_id', $this->user_id)
             ->where('quiz_id', $this->quiz_id)
             ->latest('attempted_at')
@@ -63,7 +64,6 @@ class QuizAttempt extends Model
 
         if (!$lastAttempt) return true;
 
-        // Allow retake after 1 hour
         return $lastAttempt->attempted_at->addHour()->isPast();
     }
 

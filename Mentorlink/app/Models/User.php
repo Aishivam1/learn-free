@@ -24,7 +24,8 @@ class User extends Authenticatable
         'role', // 'learner', 'mentor', 'admin'
         'points',
         'avatar',
-        'bio'
+        'bio',
+        'badges'
     ];
 
     protected $hidden = [
@@ -36,7 +37,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'points' => 'integer',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
+        'badges' => 'array',
     ];
 
     const ROLE_ADMIN = 'admin';
@@ -127,13 +129,50 @@ class User extends Authenticatable
             ->limit($limit)
             ->get();
     }
-
-    // Badge Management
-    public function awardBadge(Badge $badge)
+    public function awardBadge($badgeId, $name, $icon, $description)
     {
-        if (!$this->badges->contains($badge->id)) {
-            $this->badges()->attach($badge->id);
-            $this->addPoints($badge->points, 'badge');
+        $badges = $this->badges ?? [];
+
+        // Check if the badge already exists
+        $exists = collect($badges)->firstWhere('id', $badgeId);
+
+        if (!$exists) {
+            $badges[] = [
+                "id" => $badgeId,
+                "name" => $name,
+                "icon" => $icon,
+                "description" => $description
+            ];
+
+            $this->update(['badges' => $badges]); // Save the updated badges
         }
+    }
+    public function availableBadges()
+    {
+        return collect(config('badges')); // Get from config/badges.php
+    }
+    // Badge Management
+    // public function awardBadge($badge)
+    // {
+    //     $badges = $this->badges ?? [];
+
+    //     // Check if user already has the badge
+    //     foreach ($badges as $b) {
+    //         if ($b['id'] == $badge['id']) {
+    //             return; // Badge already exists
+    //         }
+    //     }
+
+    //     // Add new badge
+    //     $badges[] = $badge;
+    //     $this->badges = $badges;
+    //     $this->save();
+
+    //     // Add points for earning a badge (Optional)
+    //     $this->addPoints($badge['points'] ?? 0, 'badge');
+    // }
+    public function getBadges()
+    {
+        return $this->badges ?? [];
     }
 }

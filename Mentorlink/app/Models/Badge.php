@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 
 class Badge extends Model
 {
@@ -11,7 +12,7 @@ class Badge extends Model
         'description',
         'icon',
         'points',
-        'criteria_type', // 'courses_completed', 'quiz_score', 'discussion_count'
+        'criteria_type', // 'courses_completed', 'quiz_score', 'discussion_count', 'login_streak', 'total_login_days'
         'criteria_value'
     ];
 
@@ -22,8 +23,7 @@ class Badge extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'user_badges')
-            ->withTimestamps();
+        return $this->belongsToMany(User::class, 'user_badges')->withTimestamps();
     }
 
     // Badge Criteria Methods
@@ -46,6 +46,12 @@ class Badge extends Model
             case 'discussion_count':
                 return $user->discussions()
                     ->count() >= $badge->criteria_value;
+
+            case 'login_streak': // 🔥 Streak Holder (7 consecutive logins)
+                return Session::get('login_streak', 0) >= $badge->criteria_value;
+
+            case 'total_login_days': // 🏆 Committed Learner (30 total logins)
+                return count(Session::get('login_dates', [])) >= $badge->criteria_value;
 
             default:
                 return false;

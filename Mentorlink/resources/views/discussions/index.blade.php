@@ -1,53 +1,50 @@
-@extends('layouts.learner')
+@extends('layouts.app', ['course' => $course])
+
+@section('title', 'Course Discussions')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold">Course Discussions</h1>
-        <a href="{{ route('discussions.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-            New Discussion
+    <div class="container">
+
+        <a href="{{ route('discussion.create', ['courseId' => $course->id]) }}" class="btn btn-primary">
+            Create Discussion
         </a>
-    </div>
+        <h2>Course Discussions</h2>
 
-    <div class="space-y-6">
-        @forelse($discussions as $discussion)
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h3 class="text-xl font-semibold mb-2">
-                            <a href="{{ route('discussions.show', $discussion->id) }}" class="hover:text-blue-600">
-                                {{ $discussion->title }}
-                            </a>
-                        </h3>
-                        <p class="text-gray-600 text-sm mb-4">
-                            Started by {{ $discussion->user->name }} • {{ $discussion->created_at->diffForHumans() }}
-                        </p>
-                    </div>
-                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                        {{ $discussion->replies_count }} replies
-                    </span>
+        @foreach ($discussions as $discussion)
+            <div class="thread">
+                <div class="question">
+                    <img src="{{ $discussion->user->avatar ?? 'https://placehold.co/40x40' }}"
+                        alt="{{ $discussion->user->name }}">
+                    <strong>{{ $discussion->user->name }}:</strong>
+                    {{ $discussion->message }}
                 </div>
 
-                <p class="text-gray-700 mb-4">{{ Str::limit($discussion->content, 200) }}</p>
+                <!-- Replies Section -->
+                <div class="replies">
+                    @foreach ($discussion->replies as $reply)
+                        <div class="reply">
+                            <img src="{{ $reply->user->avatar ?? 'https://placehold.co/40x40' }}"
+                                alt="{{ $reply->user->name }}">
+                            <strong>{{ $reply->user->name }}:</strong>
+                            {{ $reply->message }}
 
-                <div class="flex items-center space-x-4 text-sm">
-                    <span class="text-gray-600">
-                        Course: {{ $discussion->course->title }}
-                    </span>
-                    @if($discussion->last_reply)
-                        <span class="text-gray-600">
-                            Last reply: {{ $discussion->last_reply->created_at->diffForHumans() }}
-                        </span>
-                    @endif
+                            <!-- Reply Form (Nested Reply) -->
+                            <form action="{{ route('discussion.reply', $reply->id) }}" method="POST">
+                                @csrf
+                                <textarea name="message" placeholder="Write a reply..." rows="2"></textarea>
+                                <button type="submit">Reply</button>
+                            </form>
+                        </div>
+                    @endforeach
                 </div>
-            </div>
-        @empty
-            <div class="bg-white rounded-lg shadow-sm p-6 text-center">
-                <p class="text-gray-600">No discussions yet. Start a new discussion!</p>
-            </div>
-        @endforelse
 
-        {{ $discussions->links() }}
+                <!-- Reply Button for Main Discussion -->
+                <form action="{{ route('discussion.reply', $discussion->id) }}" method="POST">
+                    @csrf
+                    <textarea name="message" placeholder="Write a reply..." rows="3"></textarea>
+                    <button type="submit">Reply</button>
+                </form>
+            </div>
+        @endforeach
     </div>
-</div>
 @endsection

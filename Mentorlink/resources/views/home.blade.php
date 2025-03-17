@@ -46,50 +46,43 @@
     </p>
     <div class="courses">
       <div class="course">
-        <img src="https://placehold.co/300x200" alt="Introduction to Web Development course image">
+
         <div class="content">
           <h3>Introduction to Web Development</h3>
           <p>
             Learn the fundamentals of HTML, CSS, and JavaScript to build modern web applications.
           </p>
           <div class="author">By Sarah Johnson</div>
-          <div class="weeks">4 weeks</div>
         </div>
         <div class="badge">Beginner</div>
       </div>
       <div class="course">
-        <img src="https://placehold.co/300x200" alt="Advanced Data Science with Python course image">
         <div class="content">
           <h3>Advanced Data Science with Python</h3>
           <p>
             Master data analysis, visualization, and machine learning techniques using Python.
           </p>
           <div class="author">By Michael Chen</div>
-          <div class="weeks">10 weeks</div>
         </div>
         <div class="badge">Intermediate</div>
       </div>
       <div class="course">
-        <img src="https://placehold.co/300x200" alt="UX/UI Design Principles course image">
         <div class="content">
           <h3>UX/UI Design Principles</h3>
           <p>
             Learn how to create intuitive, user-friendly interfaces through research and design.
           </p>
           <div class="author">By Emily Rodriguez</div>
-          <div class="weeks">6 weeks</div>
         </div>
         <div class="badge">Intermediate</div>
       </div>
       <div class="course">
-        <img src="https://placehold.co/300x200" alt="Business Leadership and Management course image">
         <div class="content">
           <h3>Business Leadership and Management</h3>
           <p>
             Develop essential leadership skills to effectively manage teams and drive success.
           </p>
           <div class="author">By Robert Williams</div>
-          <div class="weeks">12 weeks</div>
         </div>
         <div class="badge">Advanced</div>
       </div>

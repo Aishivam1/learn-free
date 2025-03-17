@@ -3,10 +3,10 @@
 @section('title', 'Dashboard - MentorLink')
 
 @section('content')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    console.log("Chart Data:", {!! json_encode($usersGrowthData ?? []) !!});
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        console.log("Chart Data:", {!! json_encode($usersGrowthData ?? []) !!});
+    </script>
     @if (Auth::user()->role == 'learner')
         <!-- 3D Cube Animation -->
         <div class="cube">
@@ -42,6 +42,7 @@
             <h2>Dashboard</h2>
             <p>Welcome back, {{ Auth::user()->name }}! Here's an overview of your learning progress.</p>
 
+            <!-- Stats Section -->
             <div class="stats">
                 <div class="stat">
                     <h3>Points</h3>
@@ -49,14 +50,16 @@
                 </div>
                 <div class="stat">
                     <h3>Badges</h3>
-                    <p>{{ count($achievements) }}</p>
+                    <p>{{ is_array(Auth::user()->badges) ? count(Auth::user()->badges) : count(json_decode(Auth::user()->badges, true) ?? []) }}
+                    </p>
                 </div>
                 <div class="stat">
                     <h3>Courses</h3>
-                    <p>{{ $enrolled_courses }} Enrolled</p>
+                    <p>{{ count($enrolled_courses) }} Enrolled</p>
                 </div>
             </div>
 
+            <!-- Enrolled Courses Section -->
             <div class="courses">
                 <h3>Enrolled Courses</h3>
                 @forelse($enrolled_courses as $course)
@@ -75,16 +78,34 @@
                 @endforelse
             </div>
 
+            <!-- Badges Section -->
             <div class="badges">
-                <h3>Badges</h3>
-                @forelse($achievements as $achievement)
-                    <div class="badge">{{ $achievement['name'] ?? $achievement->name }}</div>
-                @empty
+                <h3>Earned Badges</h3>
+                @php
+                    $earnedBadges = is_array(Auth::user()->badges)
+                        ? Auth::user()->badges
+                        : json_decode(Auth::user()->badges, true) ?? [];
+                @endphp
+
+
+                @if (count($earnedBadges) > 0)
+                    <div class="badge-list">
+                        @foreach ($earnedBadges as $badge)
+                            <div class="badge">
+                                <img src="{{ asset('badges/' . $badge['icon']) }}" width="50" height="50" alt="{{ $badge['name'] }}">
+                                <p>{{ $badge['name'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
                     <p>You haven't earned any badges yet.</p>
-                @endforelse
+                @endif
+
+                <a href="{{ route('badges.index') }}" class="btn btn-primary mt-3">View All Badges</a>
             </div>
         </section>
     @endif
+
     @if (Auth::user()->role == 'mentor')
         <section class="dashboard">
             <h2>Mentor Dashboard</h2>
@@ -107,19 +128,21 @@
 
             <div class="courses">
                 <h3>Course Performance</h3>
-                @forelse($mentor['coursePerformances'] ?? [] as $course)
-                    <div class="course">
-                        <h4>{{ $course['title'] }}</h4>
-                        <p>Enrollments: {{ $course['enrollments'] }}</p>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ $course['averageProgress'] }}%;">
-                                {{ $course['averageProgress'] }}% Average Progress
+                <div class="course-list">
+                    @forelse($mentor['coursePerformances'] ?? [] as $course)
+                        <div class="course">
+                            <h4>{{ $course['title'] }}</h4>
+                            <p>Enrollments: {{ $course['enrollments'] }}</p>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{ $course['averageProgress'] }}%;">
+                                    {{ $course['averageProgress'] }}% Average Progress
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @empty
-                    <p>No course performance data available.</p>
-                @endforelse
+                    @empty
+                        <p>No course performance data available.</p>
+                    @endforelse
+                </div>
             </div>
 
             <div class="reviews">
@@ -274,7 +297,10 @@
         }
 
         .dashboard .courses {
-            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
         .dashboard .courses h3 {
@@ -786,85 +812,83 @@
 @endpush
 
 @push('scripts')
-<script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("Admin Dashboard Loaded");
 
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("Admin Dashboard Loaded");
+            // Debugging: Check if Chart.js is available
+            if (typeof Chart === "undefined") {
+                console.error("Chart.js is not loaded!");
+                return;
+            }
 
-        // Debugging: Check if Chart.js is available
-        if (typeof Chart === "undefined") {
-            console.error("Chart.js is not loaded!");
-            return;
-        }
+            // Debugging: Log Data
+            console.log("Users Growth Labels:", {!! json_encode($usersGrowthLabels ?? []) !!});
+            console.log("Users Growth Data:", {!! json_encode($usersGrowthData ?? []) !!});
+            console.log("Course Completion Labels:", {!! json_encode($courseCompletionLabels ?? []) !!});
+            console.log("Course Completion Data:", {!! json_encode($courseCompletionData ?? []) !!});
+            console.log("Quiz Success Labels:", {!! json_encode($quizSuccessLabels ?? []) !!});
+            console.log("Quiz Success Data:", {!! json_encode($quizSuccessData ?? []) !!});
 
-        // Debugging: Log Data
-        console.log("Users Growth Labels:", {!! json_encode($usersGrowthLabels ?? []) !!});
-        console.log("Users Growth Data:", {!! json_encode($usersGrowthData ?? []) !!});
-        console.log("Course Completion Labels:", {!! json_encode($courseCompletionLabels ?? []) !!});
-        console.log("Course Completion Data:", {!! json_encode($courseCompletionData ?? []) !!});
-        console.log("Quiz Success Labels:", {!! json_encode($quizSuccessLabels ?? []) !!});
-        console.log("Quiz Success Data:", {!! json_encode($quizSuccessData ?? []) !!});
+            // Users Growth Chart
+            const usersGrowthCanvas = document.getElementById('usersGrowthChart');
+            if (usersGrowthCanvas) {
+                const usersGrowthCtx = usersGrowthCanvas.getContext('2d');
+                new Chart(usersGrowthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: {!! json_encode($usersGrowthLabels ?? []) !!},
+                        datasets: [{
+                            label: 'Users Growth',
+                            data: {!! json_encode($usersGrowthData ?? []) !!},
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            } else {
+                console.error("usersGrowthChart element not found!");
+            }
 
-        // Users Growth Chart
-        const usersGrowthCanvas = document.getElementById('usersGrowthChart');
-        if (usersGrowthCanvas) {
-            const usersGrowthCtx = usersGrowthCanvas.getContext('2d');
-            new Chart(usersGrowthCtx, {
-                type: 'line',
-                data: {
-                    labels: {!! json_encode($usersGrowthLabels ?? []) !!},
-                    datasets: [{
-                        label: 'Users Growth',
-                        data: {!! json_encode($usersGrowthData ?? []) !!},
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
-                    }]
-                }
-            });
-        } else {
-            console.error("usersGrowthChart element not found!");
-        }
+            // Course Completion Chart
+            const courseCompletionCanvas = document.getElementById('courseCompletionChart');
+            if (courseCompletionCanvas) {
+                const courseCompletionCtx = courseCompletionCanvas.getContext('2d');
+                new Chart(courseCompletionCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: {!! json_encode($courseCompletionLabels ?? []) !!},
+                        datasets: [{
+                            data: {!! json_encode($courseCompletionData ?? []) !!},
+                            backgroundColor: ['#dc3545', '#ffc107', '#198754']
+                        }]
+                    }
+                });
+            } else {
+                console.error("courseCompletionChart element not found!");
+            }
 
-        // Course Completion Chart
-        const courseCompletionCanvas = document.getElementById('courseCompletionChart');
-        if (courseCompletionCanvas) {
-            const courseCompletionCtx = courseCompletionCanvas.getContext('2d');
-            new Chart(courseCompletionCtx, {
-                type: 'pie',
-                data: {
-                    labels: {!! json_encode($courseCompletionLabels ?? []) !!},
-                    datasets: [{
-                        data: {!! json_encode($courseCompletionData ?? []) !!},
-                        backgroundColor: ['green', 'yellow', 'red']
-                    }]
-                }
-            });
-        } else {
-            console.error("courseCompletionChart element not found!");
-        }
-
-        // Quiz Success Chart
-        const quizSuccessCanvas = document.getElementById('quizSuccessChart');
-        if (quizSuccessCanvas) {
-            const quizSuccessCtx = quizSuccessCanvas.getContext('2d');
-            new Chart(quizSuccessCtx, {
-                type: 'bar',
-                data: {
-                    labels: {!! json_encode($quizSuccessLabels ?? []) !!},
-                    datasets: [{
-                        label: 'Quiz Success Rate',
-                        data: {!! json_encode($quizSuccessData ?? []) !!},
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
-                    }]
-                }
-            });
-        } else {
-            console.error("quizSuccessChart element not found!");
-        }
-    });
-</script>
-
+            // Quiz Success Chart
+            const quizSuccessCanvas = document.getElementById('quizSuccessChart');
+            if (quizSuccessCanvas) {
+                const quizSuccessCtx = quizSuccessCanvas.getContext('2d');
+                new Chart(quizSuccessCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($quizSuccessLabels ?? []) !!},
+                        datasets: [{
+                            label: 'Quiz Success Rate',
+                            data: {!! json_encode($quizSuccessData ?? []) !!},
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            } else {
+                console.error("quizSuccessChart element not found!");
+            }
+        });
+    </script>
 @endpush

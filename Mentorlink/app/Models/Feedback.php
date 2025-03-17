@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use App\Models\Point;
 
 class Feedback extends Model
 {
@@ -13,13 +15,15 @@ class Feedback extends Model
         'course_id',
         'user_id',
         'rating',
-        'comment'
+        'comment',
+        'reported_by'
     ];
 
     protected $casts = [
         'rating' => 'integer',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
+        'reported_by' => 'array' // Store as JSON array
     ];
 
     // Relationships
@@ -31,11 +35,6 @@ class Feedback extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function reports()
-    {
-        return $this->morphMany(Report::class, 'reportable');
     }
 
     // Scopes
@@ -54,10 +53,28 @@ class Feedback extends Model
         return $query->where('rating', '<=', 2);
     }
 
+    // Reporting Feature
+    // ✅ Add reportFeedback() method
+    public function reportFeedback($userId)
+    {
+        $reportedUsers = $this->reported_by ?? [];
+        if (!in_array($userId, $reportedUsers)) {
+            $reportedUsers[] = $userId;
+            $this->reported_by = $reportedUsers;
+            $this->save();
+        }
+    }
+
+    // ✅ Check if a user has reported this feedback
+    public function isReportedBy($userId)
+    {
+        return in_array($userId, $this->reported_by ?? []);
+    }
+
     // Helper methods
     public function getRatingText()
     {
-        return match($this->rating) {
+        return match ($this->rating) {
             1 => 'Poor',
             2 => 'Fair',
             3 => 'Good',
@@ -70,7 +87,7 @@ class Feedback extends Model
     public function getStarRating()
     {
         return str_repeat('★', $this->rating) .
-               str_repeat('☆', 5 - $this->rating);
+            str_repeat('☆', 5 - $this->rating);
     }
 
     public function canEdit(User $user)
@@ -81,8 +98,8 @@ class Feedback extends Model
     public function canDelete(User $user)
     {
         return $user->id === $this->user_id ||
-               $user->id === $this->course->mentor_id ||
-               $user->isAdmin();
+            $user->id === $this->course->mentor_id ||
+            $user->isAdmin();
     }
 
     protected static function boot()
@@ -91,12 +108,10 @@ class Feedback extends Model
 
         static::created(function ($feedback) {
             // Notify course mentor
-            $feedback->course->mentor->notify(
-                new NewFeedbackReceived($feedback)
-            );
+            $feedback->course->mentor->notify();
 
             // Award points for feedback
-            Point::award($feedback->user_id, 'feedback_submitted');
+            Point::award($feedback->user_id, 'feedback_submitted', 10); // ✅ Added default points (10)
 
             // Update course rating cache
             Cache::tags(['course_ratings'])->forget(
