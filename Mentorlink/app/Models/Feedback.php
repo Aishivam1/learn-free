@@ -107,11 +107,9 @@ class Feedback extends Model
         parent::boot();
 
         static::created(function ($feedback) {
-            // Notify course mentor
-            $feedback->course->mentor->notify();
-
+ 
             // Award points for feedback
-            Point::award($feedback->user_id, 'feedback_submitted', 10); // ✅ Added default points (10)
+            User::where('id', $feedback->user_id)->increment('points', 10);
 
             // Update course rating cache
             Cache::tags(['course_ratings'])->forget(
@@ -121,9 +119,8 @@ class Feedback extends Model
 
         static::deleted(function ($feedback) {
             // Update course rating cache
-            Cache::tags(['course_ratings'])->forget(
-                'course_rating_' . $feedback->course_id
-            );
+            Cache::forget('course_rating_' . $feedback->course_id);
+
         });
     }
 }

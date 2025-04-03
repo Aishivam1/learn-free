@@ -29,19 +29,14 @@
             <h3>Meet Our Team</h3>
             <div class="team-section">
                 <div class="team-member">
-                    <img src="{{ asset('images/team1.jpg') }}" alt="Team Member">
-                    <h4>John Doe</h4>
-                    <p>Founder & CEO</p>
+                    <img src="{{ asset('images/team2.gif') }}" alt="Team Member">
+                    <h4>Patel Shivam</h4>
+                    <p>Founder,CEO </p>
                 </div>
                 <div class="team-member">
-                    <img src="{{ asset('images/team2.jpg') }}" alt="Team Member">
-                    <h4>Jane Smith</h4>
-                    <p>Lead Developer</p>
-                </div>
-                <div class="team-member">
-                    <img src="{{ asset('images/team3.jpg') }}" alt="Team Member">
-                    <h4>Emily Johnson</h4>
-                    <p>Marketing Head</p>
+                    <img src="{{ asset('images/team1.gif') }}" alt="Team Member">
+                    <h4>Patel Tirth</h4>
+                    <p>Founder,CEO </p>
                 </div>
             </div>
         </div>
@@ -131,8 +126,8 @@
         }
 
         .team-member img {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
         }
 

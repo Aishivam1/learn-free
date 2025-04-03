@@ -62,25 +62,30 @@ class QuizController extends Controller
     public function show($courseId)
     {
         $course = Course::findOrFail($courseId);
-
-        // Ensure user has completed the course
+    
+        // Ensure the user has completed the course
         $enrollment = $course->enrollments()
             ->where('user_id', Auth::id())
             ->where('progress', 100)
             ->firstOrFail();
-
+    
+        // Check quiz attempt limit (max 3 attempts)
         $attemptCount = QuizAttempt::where('user_id', Auth::id())
             ->where('course_id', $courseId)
             ->count();
-
+    
         if ($attemptCount >= 3) {
             return redirect()->route('courses.show', $courseId)
                 ->with('error', 'You have reached the maximum attempt limit (3 times).');
         }
-
-        $quizzes = $course->quizzes()->select('id', 'question', 'options')->get();
+    
+        // ✅ Get all quiz questions for the course from the `quizzes` table
+        $quizzes = Quiz::where('course_id', $courseId)->get();
+    
         return view('quizzes.show', compact('course', 'quizzes', 'attemptCount'));
     }
+    
+    
 
     public function submit(Request $request, $courseId)
     {
@@ -130,6 +135,8 @@ class QuizController extends Controller
 
         // ✅ Award badges based on quiz performance
         $earnedBadges = json_decode($user->badges, true) ?? [];
+        $badges = $earnedBadges;
+
 
         $quizPassedCount = QuizAttempt::where('user_id', $user->id)
             ->where('passed', true)
@@ -221,7 +228,7 @@ class QuizController extends Controller
         $quiz = $quizzes->first();
 
         // ✅ Define `passing_score` dynamically if it's not stored in the database
-        $passingScore = 70; // Default passing threshold: 70%
+        $passingScore = 75; // Default passing threshold: 70%
 
         $answers = json_decode($attempt->answers, true) ?? [];
         $score = $attempt->score ?? 0;

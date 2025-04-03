@@ -27,15 +27,10 @@
         </div>
     @endif
     @if (Auth::user()->role == 'admin')
-        <div class="admin-3d-animation">
+        <div class="admin-3d-animation ">
             <div class="gear gear1"></div>
-            <div class="gear gear2"></div>
-            <div class="gear gear3"></div>
         </div>
     @endif
-
-
-
 
     @if (Auth::user()->role == 'learner')
         <section class="dashboard">
@@ -92,7 +87,8 @@
                     <div class="badge-list">
                         @foreach ($earnedBadges as $badge)
                             <div class="badge">
-                                <img src="{{ asset('badges/' . $badge['icon']) }}" width="50" height="50" alt="{{ $badge['name'] }}">
+                                <img src="{{ asset('badges/' . $badge['icon']) }}" width="50" height="50"
+                                    alt="{{ $badge['name'] }}">
                                 <p>{{ $badge['name'] }}</p>
                             </div>
                         @endforeach
@@ -204,55 +200,6 @@
 
 @push('styles')
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f7fa;
-            color: #333;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 50px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        header .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: #007bff;
-        }
-
-        header nav a {
-            margin: 0 15px;
-            color: #333;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        header .auth-buttons a {
-            margin-left: 15px;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        header .auth-buttons .login {
-            background-color: #fff;
-            color: #007bff;
-            border: 1px solid #007bff;
-        }
-
-        header .auth-buttons .signup {
-            background-color: #007bff;
-            color: #fff;
-        }
-
         .dashboard {
             padding: 50px 20px;
             text-align: center;
@@ -294,6 +241,7 @@
         .dashboard .stats .stat p {
             font-size: 18px;
             color: #666;
+            margin-top: 10px;
         }
 
         .dashboard .courses {
@@ -414,7 +362,7 @@
             position: absolute;
             width: 60px;
             height: 80px;
-            background: url('{{ asset('images/book.png') }}') no-repeat center center;
+            background: url('{{ asset('images/book.gif') }}') no-repeat center center;
             background-size: contain;
             animation: floatBook 10s infinite ease-in-out;
             opacity: 0.7;
@@ -497,40 +445,19 @@
 
         .gear {
             position: absolute;
-            width: 50px;
-            height: 50px;
-            background: url('{{ asset('images/gear.png') }}') no-repeat center center;
+            width: 200px;
+            height: 100px;
+            background: url('{{ asset('images/gear1.gif') }}') no-repeat center center;
             background-size: contain;
-            opacity: 0.5;
+            opacity: 1;
             animation: rotateGear 20s infinite linear;
+            repeat: not(1);
         }
 
         .gear1 {
-            top: 10%;
-            left: 15%;
+            top: 15%;
+            right:25px;
             animation-duration: 18s;
-        }
-
-        .gear2 {
-            top: 50%;
-            left: 70%;
-            animation-duration: 22s;
-        }
-
-        .gear3 {
-            top: 80%;
-            left: 30%;
-            animation-duration: 20s;
-        }
-
-        @keyframes rotateGear {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
         }
 
         body {
@@ -812,8 +739,12 @@
 @endpush
 
 @push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
+
             console.log("Admin Dashboard Loaded");
 
             // Debugging: Check if Chart.js is available
@@ -889,6 +820,95 @@
             } else {
                 console.error("quizSuccessChart element not found!");
             }
+
+            // GSAP Animations
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Animation for stats cards
+            gsap.utils.toArray('.stat, .overview-card').forEach(stat => {
+                gsap.from(stat, {
+                    opacity: 0,
+                    y: 50,
+                    scale: 0.8,
+                    duration: 1,
+                    scrollTrigger: {
+                        trigger: stat,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
+                });
+            });
+
+            // Animation for courses and reviews
+            gsap.utils.toArray('.course, .review').forEach(item => {
+                gsap.from(item, {
+                    opacity: 0,
+                    x: -50,
+                    duration: 1,
+                    scrollTrigger: {
+                        trigger: item,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
+                });
+            });
+
+            // Chart animations
+            gsap.utils.toArray('.chart-container').forEach(chart => {
+                gsap.from(chart, {
+                    opacity: 0,
+                    scale: 0.7,
+                    duration: 1,
+                    scrollTrigger: {
+                        trigger: chart,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
+                });
+            });
+
+            // Badges animation
+            gsap.utils.toArray('.badge').forEach((badge, index) => {
+                gsap.from(badge, {
+                    opacity: 0,
+                    y: 50,
+                    rotation: -20,
+                    duration: 0.5,
+                    delay: index * 0.1,
+                    scrollTrigger: {
+                        trigger: badge,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
+                });
+            });
+
+            // Header animation
+            gsap.from('header', {
+                opacity: 1,
+                y: 0,
+                duration: 1
+            });
+
+            // Dashboard title animation
+            gsap.from('p', {
+                opacity: 0,
+                scale: 0.5,
+                duration: 1,
+                ease: 'back.out(1.7)'
+            });
+
+            // Floating animation for cubes, books, and gears
+            gsap.utils.toArray('.cube .face, .book, .gear').forEach(element => {
+                gsap.to(element, {
+                    y: '+=20',
+                    rotation: '+=10',
+                    duration: 2,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'power1.inOut'
+                });
+            });
         });
     </script>
 @endpush

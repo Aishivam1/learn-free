@@ -6,7 +6,7 @@
 
         @foreach([
             ['title' => 'Announcements', 'content' => 'Stay updated with the latest news from MentorLink. We are excited to announce the launch of our new course on Advanced Data Science with Python. Enroll now!'],
-            ['title' => 'Partnerships', 'content' => 'MentorLink has partnered with TechCorp to provide exclusive content and resources for our learners.'],
+            ['title' => 'Partnerships', 'content' => 'MentorLink has partnered with multiple company to provide exclusive content and resources for our learners.'],
             ['title' => 'Platform Milestones', 'content' => 'We have reached 10,000 active learners! Thank you for being a part of our community.']
         ] as $section)
             <div class="section">

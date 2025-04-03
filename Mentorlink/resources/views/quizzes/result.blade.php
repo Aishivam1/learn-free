@@ -2,7 +2,7 @@
 
 @push('styles')
     <style>
-        /* General styles */
+        /* General Styles */
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f5f7fa;
@@ -10,164 +10,178 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        .bg-white {
+        .card {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 25px;
             margin-top: 20px;
-        }
-
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
             text-align: center;
         }
 
         .result-image {
             display: block;
-            margin: 10px auto;
-            width: 150px;
+            margin: 15px auto;
+            width: 120px;
             height: auto;
         }
 
-        .text-green-600 {
-            color: #d6dfe9;
-        }
-
-        .text-red-600 {
-            color: red;
-        }
-
-        .rounded-md {
-            border-radius: 6px;
+        .score-box {
+            font-size: 20px;
+            font-weight: bold;
             padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
             margin-top: 10px;
         }
 
-        .btn {
+        .text-green {
+            color: #0056b3;
+        }
+
+        .text-red {
+            color: #dc3545;
+        }
+
+        .button {
             display: inline-block;
             background-color: #007bff;
             color: white;
             font-size: 16px;
             font-weight: bold;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border-radius: 8px;
             transition: background-color 0.3s, transform 0.2s;
-            text-align: center;
             text-decoration: none;
+            margin: 10px;
         }
 
-        .btn:hover {
+        .button:hover {
             background-color: #0056b3;
             transform: translateY(-2px);
         }
 
-        .gh {
-            background-color: #0056b3;
+        .grade-box {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .grade-Aplus {
+            background-color: #28a745;
             color: white;
-            align-items: center;
-            justify-content: center;
-            display: flex;
+        }
+
+        .grade-A {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .grade-B {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .grade-C {
+            background-color: #fd7e14;
+            color: white;
+        }
+
+        .grade-D {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .grade-F {
+            background-color: #6c757d;
+            color: white;
         }
     </style>
 @endpush
 
 @section('content')
-    {{-- Confetti Canvas for Celebration --}}
     @if ($score >= $quiz->passing_score)
         <canvas id="confetti-canvas"></canvas>
-    @endif
-
-    {{-- Sad Falling Emojis if Failed --}}
-    @if ($score < $quiz->passing_score)
+    @else
         <canvas id="sad-canvas"></canvas>
     @endif
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <h1 class="text-3xl font-bold mb-6">Quiz Results</h1>
+    <div class="container">
+        <div class="card">
+            <h1 class="title">Quiz Results</h1>
 
-                {{-- Display Image Based on Score --}}
-                @if ($score >= $quiz->passing_score)
-                    <img src="{{ asset('images/pass.png') }}" alt="Passed" class="result-image">
-                @else
-                    <img src="{{ asset('images/fail.png') }}" alt="Failed" class="result-image">
+            {{-- Display Image Based on Score --}}
+            @if ($score >= $quiz->passing_score)
+                <img src="{{ asset('images/pass.png') }}" alt="Passed" class="result-image">
+            @else
+                <img src="{{ asset('images/fail.png') }}" alt="Failed" class="result-image">
+            @endif
+
+            {{-- Score & Grade --}}
+            <div class="score-box {{ $score >= $quiz->passing_score ? 'text-green' : 'text-red' }}">
+                Final Score: {{ $score }}%
+            </div>
+
+            @php
+                if ($score >= 90) {
+                    $grade = 'A+';
+                    $gradeClass = 'grade-Aplus';
+                    $message = "🎉 Excellent! You're a top performer!";
+                } elseif ($score >= 80) {
+                    $grade = 'A';
+                    $gradeClass = 'grade-A';
+                    $message = '👍 Very Good! Keep up the great work!';
+                } elseif ($score >= 70) {
+                    $grade = 'B';
+                    $gradeClass = 'grade-B';
+                    $message = '✅ Good effort! Keep pushing.';
+                } elseif ($score >= 60) {
+                    $grade = 'C';
+                    $gradeClass = 'grade-C';
+                    $message = '💡 Fair try! You can improve.';
+                } elseif ($score >= 50) {
+                    $grade = 'D';
+                    $gradeClass = 'grade-D';
+                    $message = '📚 Needs improvement. Study more.';
+                } else {
+                    $grade = 'F';
+                    $gradeClass = 'grade-F';
+                    $message = "❌ Failed. Don't give up!";
+                }
+            @endphp
+
+            {{-- Display Grade --}}
+            <div class="grade-box {{ $gradeClass }}">
+                Grade: {{ $grade }} <br>
+                {{ $message }}
+            </div>
+
+            {{-- Action Buttons --}}
+            <div class="buttons">
+                @if ($score < 75)
+                    <a href="{{ route('quizzes.show', ['course' => $course->id, 'quiz' => $quiz->id]) }}" class="button">
+                        Retry Quiz
+                    </a>
                 @endif
 
-                {{-- Score & Grade --}}
-                <div class="mb-8">
-                    <div class="gh">
-                        <span class="text-xl">Final Score:</span>
-                        <span
-                            class="text-2xl font-bold {{ $score >= $quiz->passing_score ? 'text-green-600' : 'text-red-600' }}">
-                            {{ $score }}%
-                        </span>
-                    </div>
-
-                    {{-- Determine Grade Dynamically --}}
-                    @php
-                        if ($score >= 90) {
-                            $grade = 'A+';
-                            $gradeClass = 'grade-Aplus';
-                            $message = "🎉 Excellent! You're a top performer!";
-                        } elseif ($score >= 80) {
-                            $grade = 'A';
-                            $gradeClass = 'grade-A';
-                            $message = '👍 Very Good! Keep up the great work!';
-                        } elseif ($score >= 70) {
-                            $grade = 'B';
-                            $gradeClass = 'grade-B';
-                            $message = '✅ Good effort! Keep pushing.';
-                        } elseif ($score >= 60) {
-                            $grade = 'C';
-                            $gradeClass = 'grade-C';
-                            $message = '💡 Fair try! You can improve.';
-                        } elseif ($score >= 50) {
-                            $grade = 'D';
-                            $gradeClass = 'grade-D';
-                            $message = '📚 Needs improvement. Study more.';
-                        } else {
-                            $grade = 'F';
-                            $gradeClass = 'grade-F';
-                            $message = "❌ Failed. Don't give up!";
-                        }
-                    @endphp
-
-                    {{-- Display Grade --}}
-                    <div class="grade-box {{ $gradeClass }}">
-                        Grade: {{ $grade }} <br>
-                        {{ $message }}
-                    </div>
-                </div>
-
-                {{-- Retake Quiz Button for Failing Users --}}
-                <div class="mt-8 flex justify-between">
-                    @if ($score < $quiz->passing_score)
-                        <a href="{{ route('quizzes.show', $quiz->id) }}" class="btn">
-                            Retry Quiz
-                        </a>
-                    @endif
-
-                    {{-- Generate Certificate Button (Only if Passed and Course Completed) --}}
-                    @if ($score >= $quiz->passing_score && $courseCompleted)
-                        <a href="{{ route('certificate.generate', $course->id) }}" class="btn btn-primary">
-                            Generate Certificate
-                        </a>
-                    @endif
-                </div>
+                @if ($score >= 75 && $courseCompleted)
+                    <a href="{{ route('certificate.generate', $course->id) }}" class="button">
+                        Generate Certificate
+                    </a>
+                @endif
             </div>
         </div>
     </div>
 @endsection
 
-{{-- Confetti Animation --}}
 @push('scripts')
     @if ($score >= $quiz->passing_score)
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1"></script>

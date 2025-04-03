@@ -10,12 +10,12 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
-    <!-- ✅ Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom CSS -->
+    <!-- Custom CSS (Ensure Your Styles Load First) -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
+
+    <!-- ✅ Bootstrap CSS (Load After Custom Styles) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -63,7 +63,7 @@
     @endif
 
     @if (!isset($hideHeaderFooter) || !$hideHeaderFooter)
-        @include('components.header')
+        @include('components.header',['course' => $course ?? null])
     @endif
 
     <main class="container min-height-100vh">

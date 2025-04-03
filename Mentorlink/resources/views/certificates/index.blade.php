@@ -23,12 +23,13 @@
                                 <td>{{ $certificate->course->title ?? 'Unknown Course' }}</td>
                                 <td>{{ \Carbon\Carbon::parse($certificate->issued_at)->format('d M Y') }}</td>
                                 <td>
-                                    <a href="{{ asset('storage/certificates/' . $certificate->certificate_url) }}" target="_blank"
+                                    <a href="{{ asset('storage/' . $certificate->certificate_url) }}" target="_blank"
                                         class="view-link">View</a>
                                 </td>
                                 <td>
-                                    <a href="{{ asset('storage/certificates/' . $certificate->certificate_url) }}" download
+                                    <a href="{{ asset('storage/' . $certificate->certificate_url) }}" download
                                         class="download-link">Download</a>
+
                                 </td>
                             </tr>
                         @endforeach
@@ -91,7 +92,8 @@
             margin-top: 10px;
         }
 
-        .certificate-table th, .certificate-table td {
+        .certificate-table th,
+        .certificate-table td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: center;
@@ -108,7 +110,7 @@
 
         /* Links */
         .view-link {
-            color:#007bff;
+            color: #007bff;
             background-color: white;
             text-decoration: none;
             padding: 5px 10px;
@@ -120,7 +122,7 @@
         }
 
         .download-link {
-            color:white ;
+            color: white;
             padding: 5px 10px;
             background-color: #007bff;
             text-decoration: none;

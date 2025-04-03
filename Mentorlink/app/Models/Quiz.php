@@ -72,4 +72,5 @@ class Quiz extends Model
 
         return ($correctAttempts / $totalAttempts) * 100;
     }
+    
 }

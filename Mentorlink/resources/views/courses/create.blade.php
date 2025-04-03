@@ -3,78 +3,83 @@
 @section('title', 'Create Course - MentorLink')
 
 @section('content')
-    <div class="create-course-page">
-        <div class="container">
-            <h2>Create a New Course</h2>
+    <div classs="box">
+        <div class="create-course-page">
+            <div class="back-btn-container">
+                <a href="{{ route('courses.index') }}" class="btn btn-my-course">Back to All Courses</a>
+            </div>
+            <div class="container">
 
-            <!-- Display validation errors -->
-            @if ($errors->any())
-                <div class="error-message">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+                <h2>Create a New Course</h2>
 
-            <form method="POST" action="{{ route('courses.store') }}" enctype="multipart/form-data">
-                @csrf
-                <input type="text" name="title" placeholder="Course Title" value="{{ old('title') }}" required>
-                @error('title')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                <!-- Display validation errors -->
+                @if ($errors->any())
+                    <div class="error-message">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-                <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description') }}</textarea>
-                @error('description')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                <form method="POST" action="{{ route('courses.store') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="text" name="title" placeholder="Course Title" value="{{ old('title') }}" required>
+                    @error('title')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-                <select name="category" required>
-                    <option value="" disabled selected>Select Category</option>
-                    <option value="Web Development" {{ old('category') == 'Web Development' ? 'selected' : '' }}>Web
-                        Development</option>
-                    <option value="Data Science" {{ old('category') == 'Data Science' ? 'selected' : '' }}>Data Science
-                    </option>
-                    <option value="Design" {{ old('category') == 'Design' ? 'selected' : '' }}>Design</option>
-                    <option value="Business" {{ old('category') == 'Business' ? 'selected' : '' }}>Business</option>
-                </select>
-                @error('category')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                    <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-                <select name="difficulty" required>
-                    <option value="" disabled selected>Select Difficulty</option>
-                    <option value="Beginner" {{ old('difficulty') == 'Beginner' ? 'selected' : '' }}>Beginner</option>
-                    <option value="Intermediate" {{ old('difficulty') == 'Intermediate' ? 'selected' : '' }}>Intermediate
-                    </option>
-                    <option value="Advanced" {{ old('difficulty') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
-                </select>
-                @error('difficulty')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                    <select name="category" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Web Development" {{ old('category') == 'Web Development' ? 'selected' : '' }}>Web
+                            Development</option>
+                        <option value="Data Science" {{ old('category') == 'Data Science' ? 'selected' : '' }}>Data Science
+                        </option>
+                        <option value="Design" {{ old('category') == 'Design' ? 'selected' : '' }}>Design</option>
+                        <option value="Business" {{ old('category') == 'Business' ? 'selected' : '' }}>Business</option>
+                    </select>
+                    @error('category')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-                <!-- Upload multiple videos -->
-                <label>Upload Course Videos:</label>
-                <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
-                <ul id="videoList"></ul>
-                @error('videos')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                    <select name="difficulty" required>
+                        <option value="" disabled selected>Select Difficulty</option>
+                        <option value="Beginner" {{ old('difficulty') == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                        <option value="Intermediate" {{ old('difficulty') == 'Intermediate' ? 'selected' : '' }}>
+                            Intermediate
+                        </option>
+                        <option value="Advanced" {{ old('difficulty') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                    </select>
+                    @error('difficulty')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-                <!-- Upload multiple PDFs -->
-                <label>Upload Course PDFs:</label>
-                <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
-                <ul id="pdfList"></ul>
-                @error('pdfs')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
+                    <!-- Upload multiple videos -->
+                    <label>Upload Course Videos:</label>
+                    <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
+                    <ul id="videoList"></ul>
+                    @error('videos')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-                <button type="submit">Submit for Approval</button>
-            </form>
+                    <!-- Upload multiple PDFs -->
+                    <label>Upload Course PDFs:</label>
+                    <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
+                    <ul id="pdfList"></ul>
+                    @error('pdfs')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
 
-            <div class="back-link">
-                <a href="{{ route('courses.index') }}">Back to All Course</a>
+                    <button type="submit">Submit for Approval</button>
+                </form>
+
+
             </div>
         </div>
     </div>
@@ -83,14 +88,12 @@
 @push('styles')
     <style>
         /* Apply styles only within the Create Course page */
+
         .create-course-page {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: calc(100vh - 100px);
-            /* Adjust height based on header/footer */
-            padding: 20px 0;
-            /* Reduced padding to minimize extra space */
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .create-course-page .container {
@@ -144,7 +147,6 @@
         }
 
         .create-course-page .back-link a {
-            color: #007bff;
             text-decoration: none;
         }
 
@@ -152,6 +154,59 @@
             color: red;
             font-size: 14px;
             margin-bottom: 10px;
+        }
+
+        .box {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .back-link,
+        .back-link a {
+            background-color: #007bff;
+            color: white !important;
+            margin-top: 15px;
+            margin-right: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            height: 40px;
+        }
+
+        .back-link:hover {
+            background-color: white;
+            color: #007bff;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            text-align: center;
+            height: 40px;
+            transition: all 0.3s ease-in-out;
+        }
+
+
+        .back-btn-container .btn-my-course {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            padding: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn-container .btn-my-course:hover {
+            background-color: #0056b3;
         }
     </style>
 @endpush

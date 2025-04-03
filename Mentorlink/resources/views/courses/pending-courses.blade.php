@@ -11,7 +11,7 @@
     </div>
 
     <div class="create-course-container">
-        <a href="{{ route('courses.index') }}" class="back-btn">Back to Courses</a>
+        <a href="{{ route('courses.index') }}" class="btn btn-my-course">Back to Courses</a>
     </div>
 
     <section class="browse-courses">
@@ -31,7 +31,7 @@
 
                     <!-- View Button -->
                     <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'pending']) }}"
-                        class="view-btn">View Details</a>
+                        class="btn btn-view">View Details</a>
 
                     <!-- Approval & Rejection Buttons -->
                     <!-- Approval & Rejection Buttons - Visible Only to Admins -->
@@ -73,28 +73,48 @@
 @push('styles')
     <style>
         .create-course-container {
-            position: absolute;
-            left: 0px;
+            position: relative;
+            left: 15px;
         }
 
-        .back-btn {
+        .btn {
             display: inline-block;
-            background-color: #3b82f6;
-            color: white;
-            font-size: 1rem;
+            padding: 12px 20px;
+            font-size: 16px;
             font-weight: bold;
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
+            border-radius: 8px;
             text-decoration: none;
-            margin-bottom: 1.5rem;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
         }
 
-        .back-btn:hover {
-            background-color: #2563eb;
-            transform: translateY(-2px);
+        .create-course-container .btn-my-course {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease-in-out;
+            box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
         }
 
+        .create-course-container .btn-my-course:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-view {
+            background-color: white;
+            color: #007bff;
+            border: 2px solid #007bff;
+        }
+
+        .btn-view:hover {
+            background-color: #007bff;
+            color: white;
+        }
 
         .create-course-btn,
         .approve-btn {
@@ -323,7 +343,8 @@
                     // Debugging
                     console.log(`Reject Button Clicked: Course ID = ${courseId}`);
 
-                    rejectForm.action = `${window.location.origin}/admin/courses/${courseId}/reject`;
+                    rejectForm.action =
+                    `${window.location.origin}/admin/courses/${courseId}/reject`;
                     console.log(`Form Action Set: ${rejectForm.action}`);
 
                     rejectModal.classList.remove('hidden');

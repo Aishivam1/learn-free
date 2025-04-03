@@ -3,99 +3,105 @@
 @section('title', 'Edit Course - MentorLink')
 
 @section('content')
-    <div class="create-course-page">
-        <div class="container">
-            <h2>Edit Course</h2>
-
-            <!-- Display validation errors -->
-            @if ($errors->any())
-                <div class="error-message">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('courses.update', $course->id) }}" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-
-                <input type="text" name="title" placeholder="Course Title" value="{{ old('title', $course->title) }}"
-                    required>
-                @error('title')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description', $course->description) }}</textarea>
-                @error('description')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <select name="category" required>
-                    <option value="" disabled>Select Category</option>
-                    <option value="Web Development"
-                        {{ old('category', $course->category) == 'Web Development' ? 'selected' : '' }}>Web Development
-                    </option>
-                    <option value="Data Science"
-                        {{ old('category', $course->category) == 'Data Science' ? 'selected' : '' }}>Data Science</option>
-                    <option value="Design" {{ old('category', $course->category) == 'Design' ? 'selected' : '' }}>Design
-                    </option>
-                    <option value="Business" {{ old('category', $course->category) == 'Business' ? 'selected' : '' }}>
-                        Business</option>
-                </select>
-                @error('category')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <select name="difficulty" required>
-                    <option value="" disabled>Select Difficulty</option>
-                    <option value="Beginner" {{ old('difficulty', $course->difficulty) == 'Beginner' ? 'selected' : '' }}>
-                        Beginner</option>
-                    <option value="Intermediate"
-                        {{ old('difficulty', $course->difficulty) == 'Intermediate' ? 'selected' : '' }}>Intermediate
-                    </option>
-                    <option value="Advanced" {{ old('difficulty', $course->difficulty) == 'Advanced' ? 'selected' : '' }}>
-                        Advanced</option>
-                </select>
-                @error('difficulty')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <!-- Upload multiple videos -->
-                <label>Upload Course Videos:</label>
-                <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
-                <ul id="videoList">
-                    <span id="existingVideoList">
-                        @foreach ($course->materials->where('type', 'video') as $video)
-                            <li>{{ $video->name }}</li>
-                        @endforeach
-                    </span>
-                </ul>
-                @error('videos')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <!-- Upload New PDFs -->
-                <label>Upload Course PDFs:</label>
-                <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
-                <ul id="pdfList">
-                    <span id="existingPdfList">
-                        @foreach ($course->materials->where('type', 'pdf') as $pdf)
-                            <li>{{ $pdf->name }}</li>
-                        @endforeach
-                    </span>
-                </ul>
-                @error('pdfs')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-
-                <button type="submit">Update Course</button>
-            </form>
-
+    <div class="box">
+        <div class="create-course-page">
             <div class="back-link">
-                <a href="{{ route('courses.index') }}">Back to All Course</a>
+                <a class="back-btn1" href="{{ route('courses.index') }}">Back to All Course</a>
+            </div>
+            <div class="container">
+                <h2>Edit Course</h2>
+
+                <!-- Display validation errors -->
+                @if ($errors->any())
+                    <div class="error-message">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('courses.update', $course->id) }}" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <input type="text" name="title" placeholder="Course Title"
+                        value="{{ old('title', $course->title) }}" required>
+                    @error('title')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <textarea name="description" placeholder="Course Description" rows="4" required>{{ old('description', $course->description) }}</textarea>
+                    @error('description')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <select name="category" required>
+                        <option value="" disabled>Select Category</option>
+                        <option value="Web Development"
+                            {{ old('category', $course->category) == 'Web Development' ? 'selected' : '' }}>Web Development
+                        </option>
+                        <option value="Data Science"
+                            {{ old('category', $course->category) == 'Data Science' ? 'selected' : '' }}>Data Science
+                        </option>
+                        <option value="Design" {{ old('category', $course->category) == 'Design' ? 'selected' : '' }}>Design
+                        </option>
+                        <option value="Business" {{ old('category', $course->category) == 'Business' ? 'selected' : '' }}>
+                            Business</option>
+                    </select>
+                    @error('category')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <select name="difficulty" required>
+                        <option value="" disabled>Select Difficulty</option>
+                        <option value="Beginner"
+                            {{ old('difficulty', $course->difficulty) == 'Beginner' ? 'selected' : '' }}>
+                            Beginner</option>
+                        <option value="Intermediate"
+                            {{ old('difficulty', $course->difficulty) == 'Intermediate' ? 'selected' : '' }}>Intermediate
+                        </option>
+                        <option value="Advanced"
+                            {{ old('difficulty', $course->difficulty) == 'Advanced' ? 'selected' : '' }}>
+                            Advanced</option>
+                    </select>
+                    @error('difficulty')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <!-- Upload multiple videos -->
+                    <label>Upload Course Videos:</label>
+                    <input type="file" name="videos[]" id="videoUpload" multiple accept="video/*">
+                    <ul id="videoList">
+                        <span id="existingVideoList">
+                            @foreach ($course->materials->where('type', 'video') as $video)
+                                <li>{{ $video->name }}</li>
+                            @endforeach
+                        </span>
+                    </ul>
+                    @error('videos')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <!-- Upload New PDFs -->
+                    <label>Upload Course PDFs:</label>
+                    <input type="file" name="pdfs[]" id="pdfUpload" multiple accept="application/pdf">
+                    <ul id="pdfList">
+                        <span id="existingPdfList">
+                            @foreach ($course->materials->where('type', 'pdf') as $pdf)
+                                <li>{{ $pdf->name }}</li>
+                            @endforeach
+                        </span>
+                    </ul>
+                    @error('pdfs')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+
+                    <button type="submit">Update Course</button>
+                </form>
+
+
             </div>
         </div>
     </div>
@@ -104,12 +110,13 @@
 @push('styles')
     <style>
         /* Same styles as create.blade.php */
+
         .create-course-page {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: calc(100vh - 100px);
-            padding: 20px 0;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+
         }
 
         .create-course-page .container {
@@ -140,6 +147,17 @@
             border-radius: 5px;
             font-size: 16px;
         }
+
+        .a .back-btn1 {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
 
         .create-course-page .container form button {
             padding: 10px;
@@ -175,13 +193,9 @@
             background-color: #0056b3;
         }
 
-        .create-course-page .back-link {
-            margin-top: 20px;
-            font-size: 14px;
-        }
+
 
         .create-course-page .back-link a {
-            color: #007bff;
             text-decoration: none;
         }
 
@@ -190,6 +204,29 @@
             font-size: 14px;
             margin-bottom: 10px;
         }
+
+
+        .back-btn:hover {
+            background-color: white;
+            color: #007bff;
+        }
+        .create-course-page .back-btn1 {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.create-course-page .back-btn1:hover {
+    background-color: #0056b3;
+}
     </style>
 @endpush
 

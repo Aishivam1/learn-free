@@ -9,11 +9,12 @@ class Discussion extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id', 'user_id', 'message','parent_id', 'reports'];
+    protected $fillable = ['course_id', 'user_id', 'message', 'parent_id', 'reports'];
     protected $casts = [
         'reports' => 'array', // Automatically handle JSON conversion
     ];
-    
+
+
     public function parent()
     {
         return $this->belongsTo(Discussion::class, 'parent_id');
@@ -32,6 +33,6 @@ class Discussion extends Model
     }
     public function course()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Course::class, 'course_id'); // Ensure foreign key is set
     }
 }

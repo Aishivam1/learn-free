@@ -4,16 +4,14 @@
     <div class="content-wrapper">
         <div class="container">
             <h2>Contact Us</h2>
-            <p>If you have any questions, feel free to reach out to us.</p>
+            <p>If you have any questions <i class="fa-solid fa-circle-question fa-shake fa-sm" style="color: #007bfd;"></i>,
+                feel free to reach out to us.</p>
 
-            <div class="contact-form">
-                <form action="#" method="POST">
-                    @csrf
-                    <input type="text" name="name" placeholder="Your Name" required>
-                    <input type="email" name="email" placeholder="Your Email" required>
-                    <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
-                    <button type="submit">Send Message</button>
-                </form>
+            <div class="contact-details">
+                <p><strong>📍 Address:</strong> 1234 Mentor Street, Knowledge City, ML 56789</p>
+                <p><strong>📧 Email:</strong> support@mentorlink.com</p>
+                <p><strong>📞 Phone:</strong> +1 234 567 890</p>
+                <p><strong>⏰ Office Hours:</strong> Monday - Friday, 9 AM - 6 PM</p>
             </div>
         </div>
     </div>
@@ -22,6 +20,7 @@
 @push('styles')
     <style>
         body {
+            color: rgb(0, 123, 255);
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
@@ -34,7 +33,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: calc(100vh - 140px); /* Adjust 140px based on your header + footer height */
+            min-height: calc(100vh - 140px);
+            /* Adjust 140px based on your header + footer height */
             padding: 20px;
         }
 
@@ -48,37 +48,35 @@
             width: 100%;
         }
 
-        .contact-form {
+        .contact-details {
             margin-top: 20px;
+            text-align: left;
         }
 
-        .contact-form input,
-        .contact-form textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .contact-details p {
+            font-size: 18px;
+            margin: 10px 0;
         }
 
-        .contact-form button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .contact-form button:hover {
-            background-color: #0056b3;
+        .contact-details strong {
+            color: #007bff;
         }
     </style>
 @endpush
 
 @push('scripts')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            gsap.to(".contact-details", {
+                duration: 2.5,
+                ease: "power1.out",
+                y: +20
+            });
+        });
+
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelector('.contact-form form').addEventListener('submit', function(e) {
                 e.preventDefault();

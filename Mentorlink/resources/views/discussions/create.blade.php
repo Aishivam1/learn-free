@@ -4,30 +4,13 @@
 
 @section('content')
     <style>
-        /* Page background */
-        body,
-        html {
-            height: 100%;
-            margin: 0;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        }
-
-        /* Container for the entire page content */
-        .page-wrapper {
+        .container {
             display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        /* Full-width header */
-        .navbar {
-            width: 100%;
-            background: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 15px 0;
-        }
-
-        /* Main content area */
         .content {
             flex: 1;
             display: flex;
@@ -36,7 +19,7 @@
             padding: 40px 0;
         }
 
-        /* Centered discussion container */
+
         .discussion-container {
             width: 90%;
             max-width: 600px;
@@ -49,10 +32,8 @@
             flex-direction: column;
             align-items: center;
             margin: 0 auto;
-            /* Center the container horizontally */
         }
 
-        /* Title */
         h2 {
             font-weight: bold;
             color: #343a40;
@@ -64,7 +45,6 @@
             transform: scale(1.05);
         }
 
-        /* Form elements */
         .form-group {
             width: 100%;
             margin-bottom: 15px;
@@ -83,12 +63,15 @@
             padding: 10px;
         }
 
+        textarea.form-control {
+            min-height: 150px;
+        }
+
         .form-control:focus {
             border-color: #007bff;
             box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
         }
 
-        /* Buttons */
         .button-group {
             width: 100%;
             display: flex;
@@ -106,13 +89,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
+            background: linear-gradient(135deg, #0a76d4, #007fe0);
             border: none;
             color: white;
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #6c757d, #343a40);
+            background: linear-gradient(135deg, #4f87b8, #007fe0);
             border: none;
             color: white;
         }
@@ -122,16 +105,12 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* Footer styling - full width */
-        .footer {
-            width: 100%;
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        .info-text {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
         }
 
-        /* Responsive design */
         @media (max-width: 768px) {
             .discussion-container {
                 width: 95%;
@@ -148,7 +127,6 @@
             }
         }
 
-        /* Animations */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -166,22 +144,47 @@
         <!-- Content (this will be centered) -->
         <div class="content">
             <div class="discussion-container">
-                <h2>Start a Discussion in {{ $course->title }}</h2>
+                <h2>Start a Discussion{{ isset($course) ? ' in ' . $course->title : '' }}</h2>
 
-                <form action="{{ route('discussions.store', $course->id) }}" method="POST">
+                @if (session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('discussions.store') }}" method="POST">
                     @csrf
 
+                    <!-- Course Selection -->
+                    <div class="form-group">
+                        <label for="course_id">Select Course:</label>
+                        <select name="course_id" id="course_id" class="form-control" required>
+                            <option value="">-- Choose a Course --</option>
+                            @if (isset($courses))
+                                @foreach ($courses as $courseOption)
+                                    <option value="{{ $courseOption->id }}"
+                                        {{ request('course_id') == $courseOption->id ? 'selected' : '' }}>
+                                        {{ $courseOption->title }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <p class="info-text">Only your enrolled courses are shown</p>
+                    </div>
+
+                    <!-- Discussion Message -->
                     <div class="form-group">
                         <label for="message">Discussion Message:</label>
                         <textarea name="message" id="message" rows="5" class="form-control" required
-                            placeholder="Write your discussion topic here..."></textarea>
+                            placeholder="Write your discussion topic here...">{{ old('message') }}</textarea>
                     </div>
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary">Create Discussion</button>
-                        <a href="{{ route('discussion.index', $course->id) }}" class="btn btn-secondary">Cancel</a>
+                        <a href="{{ route('discussions.index') }}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>

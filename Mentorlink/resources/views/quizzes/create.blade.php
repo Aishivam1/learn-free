@@ -3,114 +3,102 @@
 @section('title', $course->title . ' - Create Quiz')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
+    <div class="container">
         <!-- Hidden input for course ID -->
         <input type="hidden" name="course_id" value="{{ $course->id }}">
 
         <!-- Back to Courses Button -->
         @if ($course->enrollments->contains('user_id', auth()->id()))
-            <a href="{{ route('courses.my') }}" class="btn back-btn">My Courses</a>
+            <a href="{{ route('courses.my') }}" class="btn btn-my-course">My Courses</a>
         @else
             <a href="{{ route(request('from') === 'pending' ? 'admin.courses.pending' : 'courses.index') }}"
-                class="btn back-btn">Back to All Courses</a>
+                class="btn btn-my-course">Back to All Courses</a>
         @endif
 
-        <div class="course-details space-y-8">
-            <h1 class="text-3xl font-bold text-center">Title: {{ $course->title }}</h1>
-            <h1 class="text-3xl font-bold text-center"><strong>👨‍🏫 Mentor:</strong> {{ $course->mentor->name }}</h1>
-            <p class="text-lg text-gray-700 text-center">Description: {{ $course->description }}</p>
-            <p class="text-md text-gray-600 text-center"><strong>📊 Difficulty:</strong>
-                <span
-                    class="px-3 py-1 rounded-full text-3xl
-                {{ $course->difficulty === 'beginner' ? 'bg-green-500' : ($course->difficulty === 'intermediate' ? 'bg-yellow-500' : 'bg-red-500') }}">
+        <div class="course-details">
+            <h1>Title: {{ $course->title }}</h1>
+            <h1><strong>👨‍🏫 Mentor:</strong> {{ $course->mentor->name }}</h1>
+            <p class="course-description">Description: {{ $course->description }}</p>
+            <p class="course-difficulty"><strong>📊 Difficulty:</strong>
+                <span class="difficulty-badge {{ $course->difficulty === 'beginner' ? 'beginner' : ($course->difficulty === 'intermediate' ? 'intermediate' : 'advanced') }}">
                     {{ ucfirst($course->difficulty) }}
                 </span>
             </p>
 
             <!-- Create Quiz Form Section -->
             <div class="quiz-creation-section">
-                <h2 class="text-2xl font-semibold mb-4 text-center">📝 Create Quiz Question</h2>
-
-                <!-- Success Message -->
+                <h2>📝 Create Quiz Question</h2>
 
                 <!-- Explanation Text -->
-                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
-                    <p class="font-bold">Add Questions One By One</p>
+                <div class="alert-info">
+                    <p class="alert-title">Add Questions One By One</p>
                     <p>Fill out this form to add a question to your quiz. You can add as many questions as needed by
                         submitting this form multiple times.</p>
                 </div>
 
-                <form action="{{ route('quiz.store', $course->id) }}" method="POST"
-                    class="bg-white shadow-lg rounded-lg p-6">
+                <form action="{{ route('quiz.store', $course->id) }}" method="POST" class="quiz-form">
                     @csrf
 
                     <!-- Question -->
-                    <div class="mb-6">
-                        <label for="question" class="block text-gray-700 text-sm font-bold mb-2">Question:</label>
+                    <div class="form-group">
+                        <label for="question">Question:</label>
                         <input type="text" name="question" id="question" required
-                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                             placeholder="Enter your question">
                         @error('question')
-                            <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
+                            <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Options Section -->
-                    <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Options:</label>
-                        <p class="text-sm text-gray-600 mb-2">Select the correct answer by clicking the radio button.</p>
+                    <div class="form-group">
+                        <label>Options:</label>
+                        <p class="help-text">Select the correct answer by clicking the radio button.</p>
 
                         <div id="options-container">
                             <!-- Option 1 -->
-                            <div class="option-item mb-3 flex items-start">
-                                <input type="radio" name="correct_answer" id="option0" value="" required
-                                    class="mt-2 mr-2">
-                                <div class="w-full">
+                            <div class="option-item">
+                                <input type="radio" name="correct_answer" id="option0" value="" required>
+                                <div class="option-input-container">
                                     <input type="text" name="options[]" required
-                                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                         placeholder="Option 1"
                                         oninput="document.getElementById('option0').value = this.value">
                                 </div>
                             </div>
 
                             <!-- Option 2 -->
-                            <div class="option-item mb-3 flex items-start">
-                                <input type="radio" name="correct_answer" id="option1" value="" required
-                                    class="mt-2 mr-2">
-                                <div class="w-full">
+                            <div class="option-item">
+                                <input type="radio" name="correct_answer" id="option1" value="" required>
+                                <div class="option-input-container">
                                     <input type="text" name="options[]" required
-                                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                         placeholder="Option 2"
                                         oninput="document.getElementById('option1').value = this.value">
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex justify-between mt-2">
-                            <button type="button" id="add-option-btn" class="text-sm text-blue-500 hover:underline">
+                        <div class="option-controls">
+                            <button type="button" id="add-option-btn" class="add-option-btn">
                                 + Add Another Option
                             </button>
-                            <span class="text-sm text-gray-500" id="option-counter">2/4 options</span>
+                            <span class="option-counter" id="option-counter">2/4 options</span>
                         </div>
 
                         @error('options')
-                            <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
+                            <p class="error-message">{{ $message }}</p>
                         @enderror
 
                         @error('correct_answer')
-                            <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
+                            <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="flex items-center justify-between">
-                        <button type="submit"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">
                             Add Question to Quiz
                         </button>
 
-                        <a href="{{ route('courses.show', $course->id) }}" id="done-btn"
-                            class="text-gray-600 hover:underline">
+                        <a href="{{ route('courses.show', $course->id) }}" id="done-btn" class="btn-done">
                             Done Adding Questions
                         </a>
                     </div>
@@ -118,28 +106,27 @@
 
                 <!-- Previously Added Questions (Optional) -->
                 @if ($course->quizzes && $course->quizzes->count() > 0)
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold mb-4">Previously Added Questions</h3>
+                    <div class="previous-questions">
+                        <h3>Previously Added Questions</h3>
 
-                        <div class="bg-white shadow-lg rounded-lg p-4">
-                            <table class="min-w-full">
+                        <div class="questions-table-container">
+                            <table class="questions-table">
                                 <thead>
                                     <tr>
-                                        <th class="px-4 py-2 text-left">#</th>
-                                        <th class="px-4 py-2 text-left">Question</th>
-                                        <th class="px-4 py-2 text-left">Options</th>
+                                        <th>#</th>
+                                        <th>Question</th>
+                                        <th>Options</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($course->quizzes as $index => $quiz)
-                                        <tr class="border-t">
-                                            <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                            <td class="px-4 py-2">{{ $quiz->question }}</td>
-                                            <td class="px-4 py-2">
-                                                <ul class="list-disc ml-4">
+                                        <tr>
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $quiz->question }}</td>
+                                            <td>
+                                                <ul class="options-list">
                                                     @foreach (json_decode($quiz->options) as $option)
-                                                        <li
-                                                            class="{{ $option === $quiz->correct_answer ? 'font-bold text-green-600' : '' }}">
+                                                        <li class="{{ $option === $quiz->correct_answer ? 'correct-answer' : '' }}">
                                                             {{ $option }}
                                                             {{ $option === $quiz->correct_answer ? '✓' : '' }}
                                                         </li>
@@ -165,78 +152,6 @@
             font-family: 'Roboto', sans-serif;
             background-color: #f5f7fa;
             color: #333;
-        }
-
-        .course-details {
-            text-align: center;
-            padding: 30px 20px;
-        }
-
-        .course-details h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        .course-details p {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        /* Back Button */
-        .back-btn {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 10px 15px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease-in-out, transform 0.2s;
-        }
-
-        .back-btn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        /* Quiz Creation Styles */
-        .quiz-creation-section {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .option-item {
-            transition: all 0.3s ease;
-        }
-
-        .option-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .remove-option {
-            color: #e53e3e;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.2s ease;
-        }
-
-        .remove-option:hover {
-            color: #c53030;
-            transform: scale(1.2);
-        }
-
-        /* General Styles */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
             margin: 0;
             padding: 0;
         }
@@ -259,32 +174,67 @@
             margin-bottom: 10px;
         }
 
-        .course-details p {
+        .course-description {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .course-difficulty {
             font-size: 16px;
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        /* Back Button */
-        .back-btn {
+        .difficulty-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 18px;
             display: inline-block;
-            background-color: #007bff;
+        }
+
+        .beginner {
+            background-color: #4CAF50;
             color: white;
+        }
+
+        .intermediate {
+            background-color: #FFC107;
+            color: black;
+        }
+
+        .advanced {
+            background-color: #F44336;
+            color: white;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
             font-size: 16px;
             font-weight: bold;
-            padding: 10px 15px;
             border-radius: 8px;
             text-decoration: none;
-            transition: background-color 0.3s, transform 0.2s;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
         }
 
-        .back-btn:hover {
+        .btn-my-course {
+            background-color: #007bff;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .btn-my-course:hover {
             background-color: #0056b3;
-            transform: translateY(-2px);
         }
 
-        /* Quiz Section */
+        /* Quiz Creation Section */
         .quiz-creation-section {
+            max-width: 800px;
+            margin: 0 auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
@@ -293,124 +243,219 @@
         }
 
         .quiz-creation-section h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
             text-align: center;
-            font-size: 22px;
-            margin-bottom: 15px;
         }
 
-        #add-option-btn {
+        .quiz-creation-section h3 {
+            font-size: 20px;
+            font-weight: 600;
             margin-bottom: 15px;
+            margin-top: 30px;
+        }
+
+        /* Alert Info */
+        .alert-info {
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            color: #0c5460;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
         /* Form Styles */
-        form {
+        .quiz-form {
             background: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        label {
-            font-weight: bold;
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
         }
 
-        input[type="text"],
-        input[type="radio"] {
-            width: 100%;
-            padding: 8px;
+        .help-text {
+            font-size: 14px;
+            color: #666;
             margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
         }
 
-        input[type="radio"] {
-            width: auto;
-            margin-right: 5px;
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
         }
 
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Option Items */
         .option-item {
             display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
         }
 
-        .option-item input[type="text"] {
+        .option-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .option-input-container {
             flex: 1;
         }
 
-        /* Buttons */
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            margin-top: 10px;
             cursor: pointer;
-            font-size: 16px;
         }
 
-        button:hover {
+        .remove-option {
+            color: #e53e3e;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            margin-left: 10px;
+        }
+
+        .remove-option:hover {
+            color: #c53030;
+            transform: scale(1.2);
+        }
+
+        /* Option Controls */
+        .option-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-option-btn {
+            font-size: 14px;
+            color: #007bff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .add-option-btn:hover {
+            color: #0056b3;
+        }
+
+        .option-counter {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-submit:hover {
             background-color: #0056b3;
         }
 
-        #done-btn {
+        .btn-done {
             color: #ffffff;
             background-color: #616d85;
             border-radius: 5px;
-            padding: 10px;
-        }
-        #done-btn:hover{
-            background-color:  #465167;
-        }
-        .text-center {
-            text-align: center;
+            padding: 10px 15px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
         }
 
-        .text-green {
-            color: rgb(9, 0, 128);
+        .btn-done:hover {
+            background-color: #465167;
         }
 
-        .text-red {
-            color: red;
+        /* Previous Questions */
+        .previous-questions {
+            margin-top: 30px;
         }
 
-        /* Table Styles */
-        table {
+        .questions-table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+
+        .questions-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
 
-        table th,
-        table td {
-            padding: 10px;
-            border: 1px solid #ccc;
+        .questions-table th,
+        .questions-table td {
+            padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
 
-        table th {
-            background-color: #f0f0f0;
+        .questions-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
         }
 
-        /* Alert Messages */
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
+        .options-list {
+            list-style-type: disc;
+            margin-left: 20px;
+            padding-left: 0;
         }
 
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        .correct-answer {
+            font-weight: bold;
+            color: #28a745;
         }
 
         /* Responsive */
@@ -427,8 +472,15 @@
                 padding: 15px;
             }
 
-            button {
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-submit,
+            .btn-done {
                 width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -463,15 +515,14 @@
                         optionCount++;
 
                         const newOption = document.createElement('div');
-                        newOption.className = 'option-item mb-3 flex items-start';
+                        newOption.className = 'option-item';
                         newOption.innerHTML = `
-                            <input type="radio" name="correct_answer" id="option${optionCount - 1}" value="" required class="mt-2 mr-2">
-                            <div class="w-full relative">
+                            <input type="radio" name="correct_answer" id="option${optionCount - 1}" value="" required>
+                            <div class="option-input-container">
                                 <input type="text" name="options[]" required
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                     placeholder="Option ${optionCount}"
                                     oninput="document.getElementById('option${optionCount - 1}').value = this.value">
-                                <span class="remove-option absolute right-3 top-2">&times;</span>
+                                <span class="remove-option">&times;</span>
                             </div>
                         `;
 
@@ -486,13 +537,10 @@
                                 updateOptionCounter();
 
                                 // Renumber the options
-                                const optionItems = optionsContainer.querySelectorAll(
-                                    '.option-item');
+                                const optionItems = optionsContainer.querySelectorAll('.option-item');
                                 optionItems.forEach((item, index) => {
-                                    const radioInput = item.querySelector(
-                                        'input[type="radio"]');
-                                    const textInput = item.querySelector(
-                                        'input[type="text"]');
+                                    const radioInput = item.querySelector('input[type="radio"]');
+                                    const textInput = item.querySelector('input[type="text"]');
                                     if (radioInput) {
                                         radioInput.id = `option${index}`;
                                     }

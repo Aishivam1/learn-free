@@ -27,13 +27,13 @@ class LeaderboardController extends Controller
 
         // Weekly Leaderboard (Points earned in the current week)
         $weeklyLeaderboard = Cache::remember('weekly_leaderboard', 3600, function () {
-            return User::select('id', 'name', 'avatar', DB::raw('SUM(points) as weekly_points'))
+            return User::select('id', 'name', 'avatar', 'points')
                 ->where('updated_at', '>=', now()->startOfWeek())
-                ->groupBy('id', 'name', 'avatar')
-                ->orderByDesc('weekly_points')
+                ->orderByDesc('points')
                 ->limit(10)
                 ->get();
         });
+
 
         // Category-based Leaderboard
         $validCategories = ['courses', 'quizzes', 'discussions'];
@@ -62,7 +62,7 @@ class LeaderboardController extends Controller
                         ->get();
             }
         });
-
+ 
         return view('leaderboard', [
             'globalLeaderboard' => $globalLeaderboard,
             'weeklyLeaderboard' => $weeklyLeaderboard,

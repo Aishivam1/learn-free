@@ -3,163 +3,152 @@
 @section('title', 'Browse Courses - MentorLink')
 
 @section('content')
-    <!-- 3D Books Animation Background -->
-    <div class="books-animation">
-        <div class="book book1"></div>
-        <div class="book book2"></div>
-        <div class="book book3"></div>
-    </div>
-    <div class="create-course-container">
-        @if (Auth::user()->role === 'learner')
-            <a href="{{ route(name: 'courses.my') }}" class="create-course-btn">My Course</a>
-        @endif
-        @if (Auth::user()->role === 'mentor')
-            <a href="{{ route('courses.create') }}" class="create-course-btn">+ Create Course</a>
-            <a href="{{ route('courses.rejected') }}" class="back-btn">View Rejected Courses</a>
-        @endif
-        @if (Auth::user()->role !== 'learner')
-            <a href="{{ route('admin.courses.pending') }}" class="create-course-btn">Pending Courses</a>
-        @endif
-    </div>
+    <div class="box">
 
-    <section class="browse-courses">
-        <h2>Browse Courses</h2>
-        <p>View all approved courses, filter by category
-            @if (Auth::user()->role !== 'mentor')
-                , mentor,
+        <div class="books-animation">
+            <div class="book book1"></div>
+            <div class="book book2"></div>
+            <div class="book book3"></div>
+        </div>
+        <div class="create-course-container">
+            @if (Auth::user()->role === 'learner')
+                <a href="{{ route(name: 'courses.my') }}" class="btn btn-my-course">My Course</a>
             @endif
-            and difficulty.
-        </p>
+            @if (Auth::user()->role === 'mentor')
+                <a href="{{ route('courses.create') }}" class="btn btn-create-course">+ Create Course</a>
+                <a href="{{ route('courses.rejected') }}" class="btn btn-rejected-courses">View Rejected Courses</a>
+            @endif
+            @if (Auth::user()->role !== 'learner')
+                <a href="{{ route('admin.courses.pending') }}" class="btn btn-pending-courses">Pending Courses</a>
+            @endif
+        </div>
+        <section class="browse-courses">
+            <h2>Browse Courses</h2>
+            <p>View all approved courses, filter by category
+                @if (Auth::user()->role !== 'mentor')
+                    , mentor,
+                @endif
+                and difficulty.
+            </p>
 
-        <!-- Filters -->
-        <div class="filters">
-            <select id="category-filter">
-                <option value="">Category</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category }}">{{ $category }}</option>
-                @endforeach
-            </select>
-            @if (Auth::user()->role !== 'mentor')
-                <select id="mentor-filter">
-                    <option value="">Mentor</option>
-                    @foreach ($mentors as $mentor)
-                        <option value="{{ $mentor }}">{{ $mentor }}</option>
+            <!-- Filters -->
+            <div class="filters">
+                <select id="category-filter">
+                    <option value="">Category</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category }}">{{ $category }}</option>
                     @endforeach
                 </select>
-            @endif
-            <select id="difficulty-filter">
-                <option value="">Difficulty</option>
-                @foreach ($difficulties as $difficulty)
-                    <option value="{{ $difficulty }}">{{ $difficulty }}</option>
-                @endforeach
-            </select>
-        </div>
+                @if (Auth::user()->role !== 'mentor')
+                    <select id="mentor-filter">
+                        <option value="">Mentor</option>
+                        @foreach ($mentors as $mentor)
+                            <option value="{{ $mentor }}">{{ $mentor }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                <select id="difficulty-filter">
+                    <option value="">Difficulty</option>
+                    @foreach ($difficulties as $difficulty)
+                        <option value="{{ $difficulty }}">{{ $difficulty }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        <!-- Courses List -->
-        <div class="courses">
-            @forelse($courses as $course)
-                <div class="course" data-category="{{ $course->category }}" data-mentor="{{ $course->mentor->name }}"
-                    data-difficulty="{{ $course->difficulty }}">
+            <!-- Courses List -->
+            <div class="courses">
+                @forelse($courses as $course)
+                    <div class="course" data-category="{{ $course->category }}" data-mentor="{{ $course->mentor->name }}"
+                        data-difficulty="{{ $course->difficulty }}">
 
-                    <!-- Delete Button (Only for the course creator) -->
-                    @if (Auth::user()->role === 'mentor' && Auth::id() === $course->mentor_id)
-                        <form action="{{ route('courses.destroy', $course->id) }}" method="POST" class="delete-form">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="delete-btn">✖</button>
-                        </form>
-                    @endif
-
-                    <div class="content">
-                        <h3>{{ $course->title }}</h3>
-                        <p>{{ $course->description }}</p>
-                        <div class="author">By {{ $course->mentor->name }}</div>
-                    </div>
-                    <div class="badge">{{ $course->difficulty }}</div>
-                    @if (Auth::user()->role === 'mentor' && Auth::user()->id === $course->mentor_id)
-                        <a href="{{ route('courses.quiz.create', $course->id) }}" class="create-course-btn">
-                            <i class="fas fa-plus"></i>Add Quiz
-                        </a>
-                    @endif
-                    <!-- View Button -->
-                    <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'browse']) }}"
-                        class="view-btn">View Details</a>
-
-                    <!-- Enroll Button -->
-                    @if (Auth::user()->role == 'mentor' && Auth::id() === $course->mentor_id)
-                        <!-- Update Button for Mentors -->
-                        <a href="{{ route('courses.edit', $course->id) }}" class="enroll-btn">Update</a>
-                    @elseif (Auth::user()->role == 'learner')
-                        @php
-                            $isEnrolled = $course->enrollments()->where('user_id', Auth::id())->exists();
-                        @endphp
-
-                        @if ($isEnrolled)
-                            <button class="enroll-btn enrolled" disabled>Already Enrolled</button>
-                        @else
-                            <form action="{{ route('courses.enroll', $course->id) }}" method="POST">
+                        <!-- Delete Button (Only for the course creator) -->
+                        @if (Auth::user()->role === 'mentor' && Auth::id() === $course->mentor_id)
+                            <form action="{{ route('courses.destroy', $course->id) }}" method="POST" class="delete-form">
                                 @csrf
-                                <button type="submit" class="enroll-btn">Enroll</button>
+                                @method('DELETE')
+                                <button type="submit" class="delete-btn">✖</button>
                             </form>
                         @endif
-                    @endif
-                </div>
-            @empty
-                <p>No courses available at this time.</p>
-            @endforelse
-        </div>
 
-    </section>
+                        <div class="content">
+                            <h3>{{ $course->title }}</h3>
+                            <p>{{ $course->description }}</p>
+                            <div class="author">By {{ $course->mentor->name }}</div>
+                        </div>
+                        <div class="badge">{{ $course->difficulty }}</div>
+                        @if (Auth::user()->role === 'mentor' && Auth::user()->id === $course->mentor_id)
+                            <a href="{{ route('courses.quiz.create', $course->id) }}" class="btn btn-add-quiz">
+                                <i class="fas fa-plus"></i>Add Quiz
+                            </a>
+                        @endif
+                        <!-- View Button -->
+                        <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'browse']) }}"
+                            class="btn btn-view">View Details</a>
+
+                        <!-- Enroll Button -->
+                        @if (Auth::user()->role == 'mentor' && Auth::id() === $course->mentor_id)
+                            <!-- Update Button for Mentors -->
+                            <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-update">Update</a>
+                        @elseif (Auth::user()->role == 'learner')
+                            @php
+                                $isEnrolled = $course->enrollments()->where('user_id', Auth::id())->exists();
+                            @endphp
+
+                            <div class="btn-container">
+                                @if ($isEnrolled)
+                                    <button class="btn btn-enroll enrolled" disabled>Already Enrolled</button>
+                                @else
+                                    <form action="{{ route('courses.enroll', $course->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-enroll">Enroll</button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <p>No courses available at this time.</p>
+                @endforelse
+            </div>
+
+        </section>
+    </div>
 @endsection
 
 @push('styles')
     <style>
-        /* Delete Button */
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: red;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease-in-out;
-            z-index: 10;
-        }
-
-        .delete-btn:hover {
-            background: darkred;
+        .box {
+            position: relative;
+            height: 100vh;
+            width: 100%;
         }
 
         .create-course-container {
-            position: absolute;
-            right: 0px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .create-course-btn {
-            display: inline-block;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            background-color: #007bff;
-            border-radius: 8px;
-            text-decoration: none;
-            text-align: center;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
-            margin-bottom: 35px;
+        .course-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
         }
 
-        .create-course-btn:hover {
-            background-color: #0056b3;
+        .course-card {
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease-in-out;
         }
 
-        /* Browse Courses Section */
+        .category-selected .course-container {
+            justify-content: flex-start;
+        }
+
         .browse-courses {
             padding: 50px 20px;
             text-align: center;
@@ -209,35 +198,60 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 300px;
-            text-align: left;
+            height: 420px;
+            text-align: center;
             position: relative;
             overflow: hidden;
             transition: transform 0.2s ease-in-out;
-            padding-bottom: 60px;
+            justify-content: space-between;
+            padding-bottom: 20px;
         }
 
         .course:hover {
             transform: scale(1.05);
         }
 
-        /* Course Content */
         .course .content {
-            padding: 40px 20px 80px;
-            /* Increased top padding */
+            padding: 40px 20px;
             position: relative;
+            flex-grow: 1;
+            height: 279px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-
 
         .course .content h3 {
             font-size: 20px;
             color: #333;
             margin-bottom: 10px;
+            height: 48px;
+            /* Fixed height for title */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+            z-index: 10;
+            margin-left: 250px;
         }
 
         .course .content p {
             font-size: 16px;
             color: #666;
             margin-bottom: 10px;
+            height: 50px;
+            /* Fixed height for description */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .course .content .author {
@@ -259,68 +273,148 @@
             z-index: 5;
         }
 
+
         /* View Details Button */
-        .view-btn {
-            position: absolute;
-            bottom: 50px;
-            /* Moves it above the enroll button */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            padding: 12px;
-            background-color: white;
-            color: #007bff;
+        /* General Button Styles */
+        .btn {
+            color: #fff;
+            display: inline-block;
+            padding: 12px 20px;
             font-size: 16px;
             font-weight: bold;
-            border: none;
             border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
             text-decoration: none;
-            transition: background-color 0.3s ease-in-out, transform 0.2s;
-            box-shadow: 0px 4px 8px rgba(40, 167, 69, 0.2);
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+
         }
 
-        .view-btn:hover {
-            /* background-color: #007bff;
-                                                                                                    color: white; */
-            transform: translateX(-50%) translateY(-2px);
+
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+
+        .btn-my-course,
+        .btn-create-course,
+        .btn-rejected-courses,
+        .btn-pending-courses {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-my-course:hover,
+        .btn-create-course:hover,
+        .btn-rejected-courses:hover,
+        .btn-pending-courses:hover {
+            background-color: #0056b3;
+        }
+
+
+        /* Pending Courses Button */
+
+        /* View Details Button */
+        .btn-view {
+            background-color: white;
+            color: #007bff;
+            border: 2px solid #007bff;
+            /* Ensure proper padding */
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            text-align: center;
+            width: 100%;
+            /* Make button full width inside container */
+            display: block;
+            /* Ensure it's not shrinking */
+
+        }
+
+        .btn-view:hover {
+            background-color: #007bff;
+            color: white;
         }
 
         /* Enroll Button */
-        .enroll-btn {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            padding: 12px;
+        .btn-enroll {
             background-color: #007bff;
             color: white;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
+            align-items: center;
+            margin-bottom: 0px;
         }
 
-        .back-btn {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 10px 15px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease-in-out, transform 0.2s;
-        }
-
-        .enroll-btn:hover {
+        .btn-enroll:hover {
             background-color: #0056b3;
         }
+
+        /* Update Button */
+        .btn-update {
+            background-color: #0064cf;
+            color: white;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+        }
+
+        .btn-update:hover {
+            background-color: #014ea0;
+        }
+
+        /* Add Quiz Button */
+        .btn-add-quiz {
+            background-color: #2e8ff7;
+            color: white;
+        }
+
+        .btn-add-quiz:hover {
+            background-color: #1e5da0;
+        }
+
+        /* Delete Button */
+        .btn-delete {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+            z-index: 10;
+        }
+
+        .btn-delete:hover {
+            background: darkred;
+        }
+
+        .create-course-container .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .create-course-container .btn:hover {
+            background-color: #0056b3;
+        }
+
 
         /* Dark Mode */
         @media (prefers-color-scheme: dark) {
@@ -342,6 +436,11 @@
             .enroll-btn:hover {
                 background-color: #004080;
             }
+        }
+
+        .enroll-btn {
+            margin-bottom: 10px !important;
+            /* Ensure consistent spacing */
         }
     </style>
 @endpush
@@ -374,10 +473,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log("Browse Courses page loaded.");
 
+            // Fix the missing ID issue
             const categoryFilter = document.getElementById('category-filter');
             const mentorFilter = document.getElementById('mentor-filter');
             const difficultyFilter = document.getElementById('difficulty-filter');
             const courses = document.querySelectorAll('.course');
+
+            // Check if elements exist before proceeding
+            if (!categoryFilter || !mentorFilter || !difficultyFilter) {
+                console.error("One or more filter elements not found.");
+                return;
+            }
 
             function filterCourses() {
                 const selectedCategory = categoryFilter.value.toLowerCase();
@@ -385,9 +491,9 @@
                 const selectedDifficulty = difficultyFilter.value.toLowerCase();
 
                 courses.forEach(course => {
-                    const courseCategory = course.getAttribute('data-category').toLowerCase();
-                    const courseMentor = course.getAttribute('data-mentor').toLowerCase();
-                    const courseDifficulty = course.getAttribute('data-difficulty').toLowerCase();
+                    const courseCategory = (course.getAttribute('data-category') || "").toLowerCase();
+                    const courseMentor = (course.getAttribute('data-mentor') || "").toLowerCase();
+                    const courseDifficulty = (course.getAttribute('data-difficulty') || "").toLowerCase();
 
                     const categoryMatch = !selectedCategory || courseCategory === selectedCategory;
                     const mentorMatch = !selectedMentor || courseMentor === selectedMentor;

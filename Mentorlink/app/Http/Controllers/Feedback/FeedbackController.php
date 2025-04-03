@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Feedback;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use Illuminate\Support\Facades\DB;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +42,7 @@ class FeedbackController extends Controller
         ]);
     }
 
-    public function submit(Request $request, $courseId)
+    public function store (Request $request, $courseId)
     {
         $request->validate([
             'rating' => 'required|integer|between:1,5',
@@ -61,9 +62,13 @@ class FeedbackController extends Controller
             ->first();
 
         if ($existingFeedback) {
-            return response()->json([
-                'message' => 'You have already submitted feedback for this course'
-            ], 400);
+            $existingFeedback->update([
+                'rating' => $request->rating,
+                'comment' => $request->comment
+            ]);
+
+            return redirect()->route('courses.show', $courseId)
+                ->with('message', 'Feedback updated successfully');
         }
 
         $feedback = Feedback::create([
@@ -73,15 +78,10 @@ class FeedbackController extends Controller
             'comment' => $request->comment
         ]);
 
-        // Notify course mentor
-        $course = Course::find($courseId);
-        $course->mentor->notify(new NewFeedbackReceived($feedback));
-
-        return response()->json([
-            'message' => 'Feedback submitted successfully',
-            'feedback' => $feedback->load('user:id,name,avatar')
-        ], 201);
+        return redirect()->route('courses.show', $courseId)
+            ->with('message', 'Feedback submitted successfully');
     }
+
 
     public function update(Request $request, $feedbackId)
     {
@@ -89,40 +89,34 @@ class FeedbackController extends Controller
             'rating' => 'required|integer|between:1,5',
             'comment' => 'required|string|max:1000'
         ]);
-
-        $feedback = Feedback::where('user_id', Auth::id())
-            ->findOrFail($feedbackId);
-
+    
+        $feedback = Feedback::where('user_id', Auth::id())->findOrFail($feedbackId);
+    
         $feedback->update([
             'rating' => $request->rating,
             'comment' => $request->comment
         ]);
-
-        return response()->json([
-            'message' => 'Feedback updated successfully',
-            'feedback' => $feedback
-        ]);
+    
+        return redirect()->back()->with('success', 'Feedback updated successfully');
     }
+    
 
-    public function delete($feedbackId)
+    public function destroy($feedbackId)
     {
-        $feedback = Feedback::where(function($query) {
-                $query->where('user_id', Auth::id())
-                    ->orWhere(function($q) {
-                        $q->whereHas('course', function($q2) {
-                            $q2->where('mentor_id', Auth::id());
-                        });
+        $feedback = Feedback::where(function ($query) {
+            $query->where('user_id', Auth::id())
+                ->orWhere(function ($q) {
+                    $q->whereHas('course', function ($q2) {
+                        $q2->where('mentor_id', Auth::id());
                     });
-            })
-            ->findOrFail($feedbackId);
-
+                });
+        })->findOrFail($feedbackId);
+    
         $feedback->delete();
-
-        return response()->json([
-            'message' => 'Feedback deleted successfully'
-        ]);
+    
+        return redirect()->back()->with('success', 'Feedback deleted successfully');
     }
-
+    
     public function report(Request $request, $feedbackId)
     {
         $request->validate([

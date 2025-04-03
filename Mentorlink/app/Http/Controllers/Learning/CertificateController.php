@@ -15,7 +15,7 @@ class CertificateController extends Controller
     {
         $this->middleware('auth');
     }
-     public function index()
+    public function index()
     {
         $user = Auth::user(); // Get logged-in user
         $certificates = Certificate::where('user_id', $user->id)->get(); // Fetch user's certificates
@@ -46,6 +46,7 @@ class CertificateController extends Controller
         $certificate = Certificate::where('user_id', Auth::id())
             ->where('course_id', $courseId)
             ->first();
+        $mentor_name = $course->mentor->name;
 
         if (!$certificate) {
             // Prepare certificate data
@@ -56,7 +57,7 @@ class CertificateController extends Controller
                 'completion_date' => now()->format('F d, Y'),
                 'certificate_id' => uniqid('CERT-')
             ];
-
+            $mentor_name = $course->mentor->name;
             $pdf = PDF::loadView('certificates.template', $data);
             $filename = 'certificate_' . $courseId . '_' . Auth::id() . '.pdf';
             $path = 'certificates/' . $filename;
@@ -73,7 +74,7 @@ class CertificateController extends Controller
         }
 
         // Show the certificate in a view
-        return view('certificates.view', compact('certificate', 'course'));
+        return view('certificates.view', compact('certificate', 'course','mentor_name'));
     }
 
     public function download($courseId)

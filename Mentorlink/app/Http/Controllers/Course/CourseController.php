@@ -93,9 +93,18 @@ class CourseController extends Controller
             'description' => 'required|string',
             'category' => 'required|string|max:255',
             'difficulty' => 'required|in:Beginner,Intermediate,Advanced',
-            'videos.*' => 'required|mimes:mp4,mkv,avi,mov|max:51200',
-            'pdfs.*' => 'nullable|mimes:pdf|max:10240'
+            'videos' => 'required|array|min:1', // Ensure at least one video is uploaded
+            'videos.*' => 'file|mimes:mp4,mkv,avi,mov|max:51200',
+            'pdfs' => 'nullable|array|min:1',
+            'pdfs.*' => 'file|mimes:pdf|max:10240'
+        ], [
+            'videos.required' => 'Please upload at least one video.',
+            'videos.min' => 'Please upload at least one video.',
+            'videos.*.mimes' => 'Only MP4, MKV, AVI, and MOV videos are allowed.',
+            'pdfs.*.mimes' => 'Only PDF files are allowed.',
         ]);
+        dd($request->all());
+
 
         $course = Course::create([
             'mentor_id' => Auth::id(),
@@ -225,6 +234,11 @@ class CourseController extends Controller
 
         return redirect()->route('course.index')->with('success', 'Course updated successfully.');
     }
+    public function rejectedCourses()
+    {
+        $rejectedCourses = Course::where('status', 'rejected')->get();
+        return view('courses.rejected', compact('rejectedCourses'));
+    }
 
     // Delete a course (Mentors Only)
     public function destroy($id)
@@ -303,5 +317,17 @@ class CourseController extends Controller
 
         return back()->with('info', 'You have already completed this course.');
     }
+    public function getEnrollmentStatus(Course $course)
+    {
+        $userId = auth()->id();
+        $enrollment = $course->enrollments()->where('user_id', $userId)->first();
 
+        // Also, get quiz attempts count
+        $quizAttempts = $course->quizAttempts->where('user_id', $userId)->count();
+
+        return response()->json([
+            'progress' => $enrollment ? (int)$enrollment->progress : 0,
+            'quizAttempts' => $quizAttempts,
+        ]);
+    }
 }

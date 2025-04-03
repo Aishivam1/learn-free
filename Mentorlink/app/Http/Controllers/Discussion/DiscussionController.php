@@ -8,15 +8,61 @@ use App\Models\Course;
 use App\Models\Discussion;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Make sure you have this at the top of your file
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Services\BadgeService;
+use Illuminate\Support\Facades\DB;
 
 class DiscussionController extends Controller
 {
     public function __construct()
     {
         $this->middleware(middleware: 'auth');
+    }
+
+    public function index(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'You must be logged in to view discussions.');
+        }
+
+
+        $user = Auth::user();
+        $query = Discussion::whereNull('parent_id')->with(['user:id,name,avatar', 'course:id,title'])->withCount('replies');
+
+        // Filtering
+        if ($request->has('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->has('reported') && $request->reported == 1) {
+            $query->whereNotNull('reports');
+        }
+
+        // Access control
+        if ($user->isMentor()) {
+            $mentorCourses = Course::where('mentor_id', $user->id)->pluck('id');
+            $query->whereIn('course_id', $mentorCourses);
+        } elseif ($user->isLearner()) {
+            $enrolledCourses = DB::table('enrollments')->where('user_id', $user->id)->pluck('course_id');
+            $query->whereIn('course_id', $enrolledCourses);
+        }
+        // Admin can see all discussions (no filter needed)
+
+        // Sorting
+        $sort = $request->input('sort', 'latest'); // Default sorting: latest
+        if ($sort === 'oldest') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
+        $discussions = $query->paginate(15);
+        $courses = Course::select('id', 'title')->get(); // Fetch all courses for filtering
+
+        return view('discussions.index', compact('discussions', 'courses'));
     }
     public function listByCourse($courseId)
     {
@@ -28,164 +74,374 @@ class DiscussionController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('discussions.index', compact('discussions', 'course'));
-    }
-    public function showCreateForm($courseId)
-    {
-        $course = Course::find($courseId);
+        // Add this line to fetch all courses for the dropdown
+        $courses = Course::select('id', 'title')->get();
 
-        if (!$course) {
-            dd("Course not found!", $courseId);
+        return view('discussions.index', compact('discussions', 'course', 'courses'));
+    }
+    public function showCreateForm($courseId = null)
+    {
+        if (!Auth::check() || !Auth::user()->isLearner()) {
+            return redirect()->route('discussions.index')->with('error', 'Only learners can create discussions.');
         }
 
-        return view('discussions.create', compact('course'));
+        $user = Auth::user();
+
+        // Get only enrolled courses for the learner
+        $enrolledCourseIds = DB::table('enrollments')
+            ->where('user_id', $user->id)
+            ->pluck('course_id');
+
+        $courses = Course::select('id', 'title')
+            ->whereIn('id', $enrolledCourseIds)
+            ->get();
+
+        if ($courses->isEmpty()) {
+            return redirect()->route('courses.index')->with('error', 'You need to enroll in a course before creating discussions.');
+        }
+
+        // If course ID is provided, verify enrollment
+        $course = null;
+        if ($courseId) {
+            if (!$enrolledCourseIds->contains($courseId)) {
+                return redirect()->route('discussions.index')->with('error', 'You can only create discussions in courses you are enrolled in.');
+            }
+            $course = Course::find($courseId);
+        } else {
+            // Default to first enrolled course
+            $course = Course::find($enrolledCourseIds->first());
+        }
+
+        return view('discussions.create', compact('courses', 'course'));
     }
-    public function create(Request $request, $courseId)
+
+    public function store(Request $request)
     {
+        // Ensure only learners can create discussions
+        if (!Auth::check() || !Auth::user()->isLearner()) {
+            return back()->with('error', 'Only learners can create discussions.');
+        }
+
         $request->validate([
+            'course_id' => 'required|exists:courses,id',
             'message' => 'required|string|max:1000'
         ]);
 
-        $course = Course::findOrFail($courseId);
+        $courseId = $request->course_id;
         $user = Auth::user();
-        $discussion = Discussion::create([
+
+        // Ensure the learner is enrolled in this course
+        $isEnrolled = DB::table('enrollments')->where([
+            ['user_id', $user->id],
+            ['course_id', $courseId]
+        ])->exists();
+
+        if (!$isEnrolled) {
+            return back()->with('error', 'You can only create discussions in courses you are enrolled in.');
+        }
+
+        Discussion::create([
             'course_id' => $courseId,
-            'user_id' => Auth::id(),
+            'user_id' => $user->id,
             'message' => $request->message
         ]);
 
         // Award points for participation
         GamificationService::awardPoints($user, 20);
 
-        // Get the current badges
-        $earnedBadges = json_decode($user->badges, true) ?? [];
-        // Check for engagement badges based on discussion creation
-        $discussionCount = Discussion::where('user_id', $user->id)->count();
-        if ($discussionCount >= 10 && !array_search("Active Contributor", array_column($earnedBadges, 'name'))) {
-            $earnedBadges[] = [
-                "id" => 6,
-                "name" => "Active Contributor",
-                "icon" => "active_contributor.png",
-                "description" => "Posted 10 discussions"
-            ];
-        }
-        $user->update(['badges' => json_encode($earnedBadges)]);
-        return back()->with('success', 'Discussion created successfully.');
+        return redirect()->route('discussions.list', ['courseId' => $courseId])
+            ->with('success', 'Discussion created successfully.');
     }
+
+    public function show($id)
+    {
+        $discussion = Discussion::with(['user', 'replies.user'])->findOrFail($id);
+        return view('discussions.show', compact('discussion'));
+    }
+
     public function reply(Request $request, $discussionId)
     {
+        if (!Auth::check()) {
+            return back()->with('error', 'You must be logged in to reply.');
+        }
+
+        // All authenticated users can reply (admins, mentors, learners)
         $request->validate([
             'message' => 'required|string|max:1000'
         ]);
 
         $parentDiscussion = Discussion::findOrFail($discussionId);
 
-        $reply = Discussion::create([
+        // Check if the user can access this discussion
+        $user = Auth::user();
+        if (!$user->isAdmin()) {
+            if ($user->isMentor()) {
+                $mentorCourses = Course::where('mentor_id', $user->id)->pluck('id');
+                if (!$mentorCourses->contains($parentDiscussion->course_id)) {
+                    return back()->with('error', 'You cannot reply to discussions in courses you do not mentor.');
+                }
+            } elseif ($user->isLearner()) {
+                $enrolledCourses = DB::table('enrollments')->where('user_id', $user->id)->pluck('course_id');
+                if (!$enrolledCourses->contains($parentDiscussion->course_id)) {
+                    return back()->with('error', 'You cannot reply to discussions in courses you are not enrolled in.');
+                }
+            }
+        }
+
+        Discussion::create([
             'course_id' => $parentDiscussion->course_id,
             'user_id' => Auth::id(),
             'parent_id' => $discussionId, // Nested reply
             'message' => $request->message
         ]);
-        $user = Auth::user();
 
         // Award points for replying
-        GamificationService::awardPoints($user, 10);
-
+        GamificationService::awardPoints(Auth::user(), 10);
 
         return back()->with('success', 'Reply added successfully.');
     }
 
-
-    public function likeDiscussion($discussionId)
+    public function like($id)
     {
-        $discussion = Discussion::findOrFail($discussionId);
-        $likes = json_decode($discussion->likes ?? '[]', true); // Decode likes JSON
-
+        $discussion = Discussion::findOrFail($id);
         $userId = auth()->id();
-        if (in_array($userId, $likes)) {
+
+        // Ensure $discussion->reports is always a string before decoding
+        $reports = is_string($discussion->reports) ? json_decode($discussion->reports, true) : [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        // Ensure "likes" key exists
+        if (!isset($reports['likes']) || !is_array($reports['likes'])) {
+            $reports['likes'] = [];
+        }
+
+        if (in_array($userId, $reports['likes'])) {
             // Unlike if already liked
-            $likes = array_values(array_diff($likes, [$userId]));
+            $reports['likes'] = array_values(array_diff($reports['likes'], [$userId]));
         } else {
-            // Add like
-            $likes[] = $userId;
-        }
-        $user = Auth::user();
-
-        // Save updated likes (JSON format)
-        $discussion->update(['likes' => json_encode($likes)]);
-        $earnedBadges = json_decode($user->badges, true) ?? [];
-        $likeCount = Discussion::where('user_id', $user->id)
-            ->whereJsonContains('likes', Auth::id())
-            ->count();
-
-        if ($likeCount >= 50 && !array_search("Community Helper", array_column($earnedBadges, 'name'))) {
-            $earnedBadges[] = [
-                "id" => 7,
-                "name" => "Community Helper",
-                "icon" => "community_helper.png",
-                "description" => "Received 50 likes on discussions"
-            ];
+            // Like the discussion
+            $reports['likes'][] = $userId;
         }
 
-        // Save the updated badges
-        $user->update(['badges' => json_encode($earnedBadges)]);
-        return back()->with('success', 'Like status updated.');
-    }
-
-    public function report(Request $request, $discussionId)
-    {
-        $request->validate([
-            'reason' => 'required|string|max:500'
-        ]);
-
-        $discussion = Discussion::findOrFail($discussionId);
-
-        $reports = json_decode($discussion->reports ?? '[]', true); // Decode existing reports
-
-        // Add new report
-        $reports[] = [
-            'user_id' => auth()->id(),
-            'reason'  => $request->reason,
-            'reported_at' => now()->toDateTimeString()
-        ];
-
-        // Save updated reports (JSON format)
+        // Save updated reports back to the database
         $discussion->update(['reports' => json_encode($reports)]);
 
-        return back()->with('success', 'Discussion reported successfully.');
+        return response()->json([
+            'success' => true,
+            'likeCount' => count($reports['likes'])
+        ]);
+    }
+
+    public function getLikesCount($discussionId)
+    {
+        $discussion = Discussion::find($discussionId);
+
+        if (!$discussion) {
+            return response()->json(['error' => 'Discussion not found'], 404);
+        }
+
+        $reports = is_string($discussion->reports) ? json_decode($discussion->reports, true) : [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        $likeCount = isset($reports['likes']) ? count($reports['likes']) : 0;
+
+        return response()->json(['likes' => $likeCount]);
+    }
+
+    public function hasUserLiked($discussionId)
+    {
+        $userId = auth()->id();
+        $discussion = Discussion::find($discussionId);
+
+        if (!$discussion) {
+            return response()->json(['error' => 'Discussion not found'], 404);
+        }
+
+        $reports = is_string($discussion->reports) ? json_decode($discussion->reports, true) : [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        if (!isset($reports['likes']) || !is_array($reports['likes'])) {
+            $reports['likes'] = [];
+        }
+
+        $liked = in_array($userId, $reports['likes']);
+
+        return response()->json(['liked' => $liked]);
+    }
+
+    public function report($id)
+    {
+        $discussion = Discussion::findOrFail($id);
+        $userId = auth()->id();
+
+        // Ensure $discussion->reports is always a string before decoding
+        $reports = is_string($discussion->reports) ? json_decode($discussion->reports, true) : [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        // Ensure "reported_by" key exists
+        if (!isset($reports['reported_by']) || !is_array($reports['reported_by'])) {
+            $reports['reported_by'] = [];
+        }
+
+        if (in_array($userId, $reports['reported_by'])) {
+            // Remove report if already reported
+            $reports['reported_by'] = array_values(array_diff($reports['reported_by'], [$userId]));
+            $userReported = false;
+        } else {
+            // Add report
+            $reports['reported_by'][] = $userId;
+            $userReported = true;
+        }
+
+        // Save updated reports back to the database
+        $discussion->update(['reports' => json_encode($reports)]);
+
+        return response()->json([
+            'success' => true,
+            'reportCount' => count($reports['reported_by']),
+            'userReported' => $userReported
+        ]);
+    }
+    public function isReportedByUser($id)
+    {
+        $discussion = Discussion::findOrFail($id);
+        $userId = auth()->id();
+
+        // Check if the discussion has any reports
+        $reports = is_string($discussion->reports) ? json_decode($discussion->reports, true) : [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        // Check if the user has reported this discussion
+        $isReported = isset($reports['reported_by']) &&
+            is_array($reports['reported_by']) &&
+            in_array($userId, $reports['reported_by']);
+
+        return response()->json([
+            'isReported' => $isReported
+        ]);
     }
 
     public function getReportedDiscussions()
     {
-        $reportedDiscussions = Discussion::whereNotNull('reports')->get()->map(function ($discussion) {
-            $discussion->reports = json_decode($discussion->reports, true);
-            return $discussion;
-        });
+        // Only admins should access this
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->route('discussions.index')
+                ->with('error', 'You do not have permission to view reported discussions.');
+        }
 
-        return view('admin.reported_discussions', compact('reportedDiscussions'));
+        $reportedDiscussions = Discussion::whereNotNull('reports')
+            ->get()
+            ->filter(function ($discussion) {
+                $reports = json_decode($discussion->reports, true);
+                return is_array($reports) &&
+                    isset($reports['reported_by']) &&
+                    is_array($reports['reported_by']) &&
+                    count($reports['reported_by']) > 0;
+            })
+            ->map(function ($discussion) {
+                $discussion->reports = json_decode($discussion->reports, true);
+                return $discussion;
+            });
+
+        return view('admin.reported-discussions', compact('reportedDiscussions'));
     }
 
     public function dismissReports($discussionId)
     {
+        // Only admins should be able to dismiss reports
+        if (!Auth::user()->isAdmin()) {
+            return back()->with('error', 'You do not have permission to dismiss reports.');
+        }
+
         $discussion = Discussion::findOrFail($discussionId);
-        $discussion->update(['reports' => json_encode([])]); // Clear reports
+
+        // Keep likes, remove only reports
+        $reports = json_decode($discussion->reports, true) ?: [];
+        if (!is_array($reports)) {
+            $reports = [];
+        }
+
+        // Keep likes if they exist
+        $likes = isset($reports['likes']) ? $reports['likes'] : [];
+
+        // Reset reports but keep likes
+        $discussion->update(['reports' => json_encode(['likes' => $likes, 'reported_by' => []])]);
 
         return back()->with('success', 'Reports dismissed successfully.');
     }
 
+    public function myDiscussions()
+    {
+        // Ensure only learners can access this function
+        if (!Auth::check() || !Auth::user()->isLearner()) {
+            return back()->with('error', 'Only learners can view their discussions.');
+        }
+
+        $discussions = Discussion::where('user_id', Auth::id())
+            ->whereNull('parent_id') // Only show main discussions (not replies)
+            ->with(['course:id,title']) // Fetch course titles for reference
+            ->withCount('replies')
+            ->latest()
+            ->paginate(15);
+
+        return view('discussions.my_discussions', compact('discussions'));
+    }
+
     public function delete($discussionId)
     {
-        $discussion = Discussion::where(function ($query) {
-            $query->where('user_id', Auth::id())
-                ->orWhereHas('course', function ($q) {
-                    $q->where('mentor_id', Auth::id());
-                });
-        })->findOrFail($discussionId);
+        $discussion = Discussion::findOrFail($discussionId);
+        $user = Auth::user();
 
-        // Delete discussion and its replies
-        $discussion->replies()->delete();
-        $discussion->delete();
+        // Allow learners to delete their own discussions
+        if ($discussion->user_id === $user->id && $user->isLearner()) {
+            $this->deleteRepliesRecursively($discussion);
+            $discussion->delete();
+            return back()->with('success', 'Your discussion has been deleted.');
+        }
 
-        return back()->with('success', 'Discussion deleted successfully.');
+        // Allow mentors to delete discussions in their courses
+        if ($user->isMentor()) {
+            $mentorCourses = Course::where('mentor_id', $user->id)->pluck('id');
+            if ($mentorCourses->contains($discussion->course_id)) {
+                $this->deleteRepliesRecursively($discussion);
+                $discussion->delete();
+                return back()->with('success', 'Discussion deleted from your course.');
+            }
+        }
+
+        // Allow admins to delete reported discussions only
+        if ($user->isAdmin()) {
+            $reports = json_decode($discussion->reports, true) ?: [];
+            $reportedBy = $reports['reported_by'] ?? [];
+
+            if (is_array($reportedBy) && count($reportedBy) > 0) {
+                $this->deleteRepliesRecursively($discussion);
+                $discussion->delete();
+                return back()->with('success', 'Reported discussion deleted successfully.');
+            } else {
+                return back()->with('error', 'Admins can only delete reported discussions.');
+            }
+        }
+
+        return back()->with('error', 'You are not authorized to delete this discussion.');
+    }
+
+    // Recursive function to delete nested replies
+    private function deleteRepliesRecursively($discussion)
+    {
+        foreach ($discussion->replies as $reply) {
+            $this->deleteRepliesRecursively($reply);
+            $reply->delete();
+        }
     }
 }

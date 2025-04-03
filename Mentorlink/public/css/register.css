@@ -1,0 +1,248 @@
+/* Modern CSS */
+
+/* Use CSS Custom Properties */
+:root {
+    --primary-color: #007bff;
+    --text-color: #333;
+    --background-color: #f5f7fa;
+    --border-color: #ccc;
+    --font-family: 'Roboto', sans-serif;
+}
+
+/* Reset and Base Styles */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Cube Container */
+.cube-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    perspective: 800px;
+}
+
+.cube-face {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #fff;
+    background-color: rgba(0, 123, 255, 0.7);
+    transition: transform 1s;
+}
+
+.front-face {
+    transform: translateZ(20px);
+}
+
+.back-face {
+    transform: rotateY(180deg) translateZ(20px);
+}
+
+.right-face {
+    transform: rotateY(90deg) translateZ(20px);
+}
+
+.left-face {
+    transform: rotateY(-90deg) translateZ(20px);
+}
+
+.top-face {
+    transform: rotateX(90deg) translateZ(20px);
+}
+
+.bottom-face {
+    transform: rotateX(-90deg) translateZ(20px);
+}
+
+/* Register Container */
+.register-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 350px;
+    padding: 15px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    z-index: 2;
+}
+
+.register-container h2 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 24px;
+}
+
+.register-container form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.register-container form input,
+.register-container form select {
+    margin-bottom: 15px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: #fff;
+    color: var(--text-color);
+    transition: border-color 0.3s ease;
+}
+
+.register-container form input:focus,
+.register-container form select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.register-container form button {
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--primary-color);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.register-container form button:hover {
+    background-color: #0056b3;
+}
+
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+    color: #003d82;
+}
+
+/* Avatar Selector */
+.avatar-selector {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.avatar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.avatar-button img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+.avatar-button i {
+    font-size: 12px;
+}
+
+.avatar-options {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+    width: 340px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.avatar-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s;
+    padding: 5px;
+}
+
+.avatar-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+.avatar-item:hover img {
+    border-color: var(--primary-color);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .register-container {
+        padding: 20px;
+    }
+
+    .avatar-button {
+        width: 160px;
+        padding: 10px;
+    }
+
+    .avatar-button img {
+        width: 35px;
+        height: 35px;
+        margin-right: 10px;
+    }
+}
