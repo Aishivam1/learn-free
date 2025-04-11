@@ -4,7 +4,6 @@
 
 @section('content')
     <div class="box">
-
         <div class="books-animation">
             <div class="book book1"></div>
             <div class="book book2"></div>
@@ -77,9 +76,19 @@
                         </div>
                         <div class="badge">{{ $course->difficulty }}</div>
                         @if (Auth::user()->role === 'mentor' && Auth::user()->id === $course->mentor_id)
-                            <a href="{{ route('courses.quiz.create', $course->id) }}" class="btn btn-add-quiz">
-                                <i class="fas fa-plus"></i>Add Quiz
-                            </a>
+                            @php
+                                $quizExists = \App\Models\Quiz::where('course_id', $course->id)->exists();
+                            @endphp
+
+                            @if ($quizExists)
+                                <a href="{{ route('quiz.edit', $course->id) }}" class="btn btn-add-quiz">
+                                    <i class="fas fa-edit"></i> Update Quiz
+                                </a>
+                            @else
+                                <a href="{{ route('courses.quiz.create', $course->id) }}" class="btn btn-add-quiz">
+                                    <i class="fas fa-plus"></i> Add Quiz
+                                </a>
+                            @endif
                         @endif
                         <!-- View Button -->
                         <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'browse']) }}"
@@ -113,6 +122,7 @@
 
         </section>
     </div>
+
 @endsection
 
 @push('styles')
@@ -297,7 +307,6 @@
             margin-top: 20px;
         }
 
-
         .btn-my-course,
         .btn-create-course,
         .btn-rejected-courses,
@@ -415,6 +424,9 @@
             background-color: #0056b3;
         }
 
+        .btn-pending-courses {
+            z-index: 1 !important;
+        }
 
         /* Dark Mode */
         @media (prefers-color-scheme: dark) {

@@ -12,6 +12,7 @@ use App\Models\Enrollment;
 use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
@@ -32,7 +33,6 @@ class QuizController extends Controller
 
         return view('quizzes.create', compact('course'));
     }
-
     public function store(Request $request, $courseId)
     {
         $request->validate([
@@ -58,35 +58,31 @@ class QuizController extends Controller
 
         return redirect()->route('courses.quiz.create', $course->id)->with('success', 'Quiz added successfully.');
     }
-
     public function show($courseId)
     {
         $course = Course::findOrFail($courseId);
-    
+
         // Ensure the user has completed the course
         $enrollment = $course->enrollments()
             ->where('user_id', Auth::id())
             ->where('progress', 100)
             ->firstOrFail();
-    
+
         // Check quiz attempt limit (max 3 attempts)
         $attemptCount = QuizAttempt::where('user_id', Auth::id())
             ->where('course_id', $courseId)
             ->count();
-    
+
         if ($attemptCount >= 3) {
             return redirect()->route('courses.show', $courseId)
                 ->with('error', 'You have reached the maximum attempt limit (3 times).');
         }
-    
+
         // ✅ Get all quiz questions for the course from the `quizzes` table
         $quizzes = Quiz::where('course_id', $courseId)->get();
-    
+
         return view('quizzes.show', compact('course', 'quizzes', 'attemptCount'));
     }
-    
-    
-
     public function submit(Request $request, $courseId)
     {
         $request->validate([
@@ -170,7 +166,6 @@ class QuizController extends Controller
                 'total_questions' => $totalQuestions
             ]);
     }
-
     public function attempt($courseId)
     {
         $course = Course::findOrFail($courseId);
@@ -201,7 +196,6 @@ class QuizController extends Controller
         $quizzes = Quiz::where('course_id', $courseId)->get();
         return view('quizzes.attempt', compact('course', 'quizzes'));
     }
-
     public function result($courseId)
     {
         $course = Course::findOrFail($courseId);
@@ -239,8 +233,6 @@ class QuizController extends Controller
 
         return view('quizzes.result', compact('course', 'attempt', 'quiz', 'quizzes', 'answers', 'score', 'courseCompleted', 'passingScore'));
     }
-
-
     public function retake($courseId)
     {
         $attemptCount = QuizAttempt::where('user_id', Auth::id())
@@ -255,7 +247,6 @@ class QuizController extends Controller
         return redirect()->route('quiz.show', $courseId)
             ->with('message', 'You can retake the quiz.');
     }
-
     public function getAttempts($courseId)
     {
         $attempts = QuizAttempt::where('user_id', Auth::id())
@@ -283,5 +274,168 @@ class QuizController extends Controller
         }
 
         return back()->with('error', 'Quiz failed. Try again!');
+    }
+    public function edit($course_id, $quiz_id = null)
+    {
+        try {
+            // Log the request
+            Log::info('Quiz edit initiated for course', [
+                'course_id' => $course_id,
+                'quiz_id' => $quiz_id,
+                'user' => Auth::user()->login,
+                'timestamp' => now()
+            ]);
+
+            // Find the course
+            $course = Course::findOrFail($course_id);
+            Log::info('Course found', ['course' => $course->toArray()]);
+
+            // Ensure only the mentor can edit quizzes
+            if ($course->mentor_id !== Auth::id()) {
+                Log::warning('Unauthorized quiz access attempt', [
+                    'course_id' => $course_id,
+                    'user_id' => Auth::id(),
+                    'mentor_id' => $course->mentor_id
+                ]);
+                return redirect()->back()
+                    ->with('error', 'You are not allowed to edit quizzes for this course.');
+            }
+
+            // Fetch all quiz questions for this course
+            $relatedQuizzes = Quiz::where('course_id', $course->id)->get();
+            Log::info('Related quizzes found', ['count' => $relatedQuizzes->count()]);
+
+            // Decode the options for each related quiz
+            foreach ($relatedQuizzes as $relatedQuiz) {
+                $relatedQuiz->options = json_decode($relatedQuiz->options, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \Exception('Invalid JSON format in quiz options: ' . json_last_error_msg());
+                }
+            }
+
+            // Get the specified quiz or the first quiz to display initially
+            $quiz = $quiz_id ? Quiz::findOrFail($quiz_id) : $relatedQuizzes->first();
+
+            return view('quizzes.edit', compact('quiz', 'course', 'relatedQuizzes'));
+        } catch (\Exception $e) {
+            Log::error('Error in quiz edit:', [
+                'course_id' => $course_id,
+                'quiz_id' => $quiz_id,
+                'user_id' => Auth::id(),
+                'error_message' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error loading quiz editor: ' . $e->getMessage());
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            // Validate request
+            $validated = $request->validate([
+                'question' => 'required|string|max:255',
+                'options' => 'required|array|min:2|max:4',
+                'options.*' => 'required|string|max:255|distinct',
+                'correct_answer' => 'required|string|max:255',
+                'course_id' => 'required|exists:courses,id'
+            ]);
+
+            // Find the quiz and course
+            $quiz = Quiz::findOrFail($id);
+            $course = Course::findOrFail($request->course_id);
+
+            // Log the mentor ID and authenticated user ID for debugging
+            Log::info('Checking authorization', [
+                'mentor_id' => $course->mentor_id,
+                'auth_id' => Auth::id()
+            ]);
+
+            // Authorization check
+            if ($course->mentor_id !== Auth::id()) {
+                Log::warning('Unauthorized update attempt', [
+                    'course_id' => $course->id,
+                    'quiz_id' => $id,
+                    'mentor_id' => $course->mentor_id,
+                    'auth_id' => Auth::id()
+                ]);
+                return redirect()->back()
+                    ->with('error', 'You are not authorized to update this quiz.');
+            }
+
+            // Verify correct_answer is in options array
+            if (!in_array($request->correct_answer, $request->options)) {
+                return redirect()->back()
+                    ->with('error', 'The correct answer must be one of the options.')
+                    ->withInput();
+            }
+
+            // Update quiz
+            $quiz->update([
+                'question' => $request->question,
+                'options' => json_encode($request->options),
+                'correct_answer' => $request->correct_answer
+            ]);
+
+            Log::info('Quiz updated successfully', [
+                'quiz_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->route('quiz.edit', ['course_id' => $course->id, 'quiz_id' => $quiz->id])
+                ->with('success', 'Quiz question updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating quiz:', [
+                'quiz_id' => $id,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error updating quiz question.')
+                ->withInput();
+        }
+    }
+    public function destroy($id)
+    {
+        try {
+            // Find the quiz and course
+            $quiz = Quiz::findOrFail($id);
+            $course = Course::findOrFail($quiz->course_id);
+
+            // Authorization check
+            if ($course->mentor_id !== Auth::id()) {
+                return redirect()->back()
+                    ->with('error', 'You are not authorized to delete this quiz.');
+            }
+
+            // Check if this is the last quiz
+            $quizCount = Quiz::where('course_id', $course->id)->count();
+            if ($quizCount <= 1) {
+                return redirect()->back()
+                    ->with('error', 'Cannot delete the last quiz question. A course must have at least one quiz question.');
+            }
+
+            // Delete the quiz
+            $quiz->delete();
+
+            Log::info('Quiz deleted successfully', [
+                'quiz_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                ->with('success', 'Quiz question deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error deleting quiz:', [
+                'quiz_id' => $id,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error deleting quiz question.');
+        }
     }
 }

@@ -72,10 +72,12 @@
                             <li class="material-item">
                                 <div class="material-header">
                                     <strong>{{ $video->name }}</strong>
-                                    <button class="play-btn" data-video="{{ route('materials.video', $video->id) }}"
-                                        data-id="{{ $video->id }}" data-title="{{ $video->name }}">
-                                        ▶️ Play
-                                    </button>
+                                    @if ($isEnrolled)
+                                        <button class="play-btn" data-video="{{ route('materials.video', $video->id) }}"
+                                            data-id="{{ $video->id }}" data-title="{{ $video->name }}">
+                                            ▶️ Play
+                                        </button>
+                                    @endif
                                 </div>
 
                                 <!-- Individual Progress Bar -->
@@ -100,18 +102,20 @@
                             <li class="material-item">
                                 <div class="material-header">
                                     <strong>{{ $pdf->name }}</strong>
-                                    <div class="pdf-actions">
-                                        <!-- View PDF Button -->
-                                        <button class="view-pdf-btn" data-pdf="{{ route('materials.pdf', $pdf->id) }}"
-                                            data-name="{{ $pdf->name }}">
-                                            📖 View PDF
-                                        </button>
+                                    @if ($isEnrolled)
+                                        <div class="pdf-actions">
+                                            <!-- View PDF Button -->
+                                            <button class="view-pdf-btn" data-pdf="{{ route('materials.pdf', $pdf->id) }}"
+                                                data-name="{{ $pdf->name }}">
+                                                📖 View PDF
+                                            </button>
 
-                                        <!-- Download PDF Button -->
-                                        <a href="{{ route('materials.pdf', $pdf->id) }}" class="download-btn" download>
-                                            ⬇ Download
-                                        </a>
-                                    </div>
+                                            <!-- Download PDF Button -->
+                                            <a href="{{ route('materials.pdf', $pdf->id) }}" class="download-btn" download>
+                                                ⬇ Download
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             </li>
                         @endforeach
@@ -133,6 +137,13 @@
             @if ($course->feedback->count() > 0)
                 @foreach ($course->feedback as $feedback)
                     <div class="feedback-item">
+                        @if ($feedback->user->avatar)
+                            <img src="{{ asset('avatar/' . $feedback->user->avatar) }}" alt="{{ $feedback->user->name }}"
+                                class="feedback-avatar">
+                        @else
+                            <div class="feedback-avatar-placeholder">{{ strtoupper(substr($feedback->user->name, 0, 1)) }}
+                            </div>
+                        @endif
                         <strong class="feedback-user">{{ $feedback->user->name }}</strong>
                         <span class="feedback-rating">⭐ {{ $feedback->rating }}/5</span>
                         @if ($feedback->comment)
@@ -145,15 +156,14 @@
                                     data-rating="{{ $feedback->rating }}"
                                     data-comment="{{ $feedback->comment }}">Edit</button>
                                 <form action="{{ route('feedback.destroy', $feedback->id) }}" method="POST"
-                                    class="inline-form">
+                                    class="inline-form delete-feedback-form">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="delete-btn">Delete</button>
                                 </form>
                             @endif
                             {{-- 
-                            <form action="{{ route('feedback.report', $feedback->id) }}" method="POST"
-                                class="inline-form">
+                            <form action="{{ route('feedback.report', $feedback->id) }}" method="POST" class="inline-form">
                                 @csrf
                                 <button type="submit" class="report-btn">Report</button>
                             </form> --}}
@@ -163,9 +173,12 @@
             @else
                 <p class="no-feedback">No feedback yet. Be the first to review this course!</p>
             @endif
-
+            @auth
+                @if (Auth::user()->role === 'learner' && $isEnrolled)
+                    <button id="show-feedback-form" class="feedback-btn">📝 Leave a Review</button>
+                @endif
+            @endauth
             <!-- Feedback Button -->
-            <button id="show-feedback-form" class="feedback-btn">📝 Leave a Review</button>
 
             <!-- Feedback Form (Initially Hidden) -->
             <form id="feedback-form" action="{{ route('feedback.store', $course->id) }}" method="POST"
@@ -180,11 +193,17 @@
                         <option value="2">⭐️⭐️ (Below Average)</option>
                         <option value="1">⭐️ (Poor)</option>
                     </select>
+                    @if ($errors->has('rating'))
+                        <div class="error-message">{{ $errors->first('rating') }}</div>
+                    @endif
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Comment:</label>
-                    <textarea name="comment" class="form-textarea" rows="3" placeholder="Write your feedback..."></textarea>
+                    <textarea name="comment" class="form-textarea" rows="3" placeholder="Write your feedback..." required></textarea>
+                    @if ($errors->has('comment'))
+                        <div class="error-message">{{ $errors->first('comment') }}</div>
+                    @endif
                 </div>
 
                 <button type="submit" class="submit-btn">Submit Feedback</button>
@@ -203,11 +222,17 @@
                         <option value="2">⭐️⭐️ (Below Average)</option>
                         <option value="1">⭐️ (Poor)</option>
                     </select>
+                    @if ($errors->has('rating'))
+                        <div class="error-message">{{ $errors->first('rating') }}</div>
+                    @endif
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Comment:</label>
-                    <textarea name="comment" id="edit-feedback-comment" class="form-textarea" rows="3"></textarea>
+                    <textarea name="comment" id="edit-feedback-comment" class="form-textarea" rows="3" required></textarea>
+                    @if ($errors->has('comment'))
+                        <div class="error-message">{{ $errors->first('comment') }}</div>
+                    @endif
                 </div>
 
                 <button type="submit" class="submit-btn">Update Feedback</button>
@@ -683,6 +708,32 @@
             display: inline;
         }
 
+        .feedback-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .feedback-avatar-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3490dc;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .feedback-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
         /* Responsive Styles */
         @media (max-width: 768px) {
             .container {
@@ -720,6 +771,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
             // Initialize feedback form toggle
             initFeedbackForm();
 
@@ -1157,28 +1209,35 @@
                 .then(data => {
                     console.log("Enrollment status:", data);
                     const quizSection = document.getElementById('quiz-section');
+
                     if (!quizSection) {
                         console.error("Quiz section element not found.");
                         return;
                     }
-                    // Update quiz section based on enrollment status and quiz attempts
-                    if (data.progress >= 100) {
+
+                    // Simple check: if progress is 100% and attempts are less than 3, show quiz button
+                    if (data.progress === 100) {
                         if (data.quizAttempts < 3) {
-                            quizSection.innerHTML =
-                                `<a href="{{ route('quiz.attempt', $course->id) }}" class="quiz-btn">📝 Attend Quiz</a>`;
+                            quizSection.innerHTML = `
+                    <a href="/courses/${courseId}/quiz/attempt" class="quiz-btn">📝 Attend Quiz</a>`;
                         } else {
-                            quizSection.innerHTML = `<p class="alert-message">
-                    <i class="alert-icon"></i> You have reached the maximum quiz attempts (3).
-                </p>`;
+                            quizSection.innerHTML = `
+                    <p class="alert-message">
+                        <i class="alert-icon"></i> You have reached the maximum quiz attempts (3).
+                    </p>`;
                         }
                     } else {
-                        quizSection.innerHTML = `<p class="alert-message">
-                <i class="alert-icon"></i> You need to complete the course to attend the quiz.
-            </p>`;
+                        quizSection.innerHTML = `
+                <p class="alert-message">
+                    <i class="alert-icon"></i> You need to complete the course to attend the quiz.
+                </p>`;
                     }
                 })
                 .catch(error => console.error("Error checking quiz availability:", error));
         }
+
+        // Call this function when the page loads
+        document.addEventListener('DOMContentLoaded', checkQuizAvailability);
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.edit-feedback-btn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -1198,6 +1257,21 @@
                     // Show the edit form
                     document.getElementById('edit-feedback-form').style.display = 'block';
                 });
+            });
+        });
+        // Get all delete feedback forms
+        const deleteForms = document.querySelectorAll('.delete-feedback-form');
+
+        // Add event listener to each form
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent form from submitting immediately
+
+                const confirmation = confirm('Are you sure you want to delete this feedback?');
+
+                if (confirmation) {
+                    this.submit(); // Submit form if user confirms
+                }
             });
         });
     </script>

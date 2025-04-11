@@ -455,8 +455,8 @@
         }
 
         .gear1 {
-            top: 15%;
-            right:25px;
+            top: 2%;
+            right: -125px;
             animation-duration: 18s;
         }
 
@@ -470,6 +470,10 @@
 
         .container {
             padding: 40px;
+            position: relative;
+            /* Required for z-index to work */
+            z-index: -1;
+            /* Moves it behind other elements */
             text-align: center;
         }
 
@@ -482,6 +486,7 @@
             display: flex;
             justify-content: space-around;
             margin-bottom: 40px;
+
         }
 
         .overview-card {

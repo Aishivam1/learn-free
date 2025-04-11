@@ -39,7 +39,8 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:learner,mentor',
-            'avatar' => 'required|in:' . implode(',', $availableAvatars) // Validate from actual files
+            'avatar' => 'required|in:' . implode(',', $availableAvatars), // Validate from actual files
+            'bio' => 'nullable|string|max:1000' // Optional bio field
         ]);
 
         // Create new user
@@ -49,6 +50,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'avatar' => $request->avatar, // Store selected avatar
+            'bio' => $request->bio, // This will be null if not provided
+
         ]);
 
         // Award points for registration (first-time registration bonus)

@@ -42,11 +42,16 @@ class FeedbackController extends Controller
         ]);
     }
 
-    public function store (Request $request, $courseId)
+    public function store(Request $request, $courseId)
     {
         $request->validate([
             'rating' => 'required|integer|between:1,5',
             'comment' => 'required|string|max:1000'
+        ], [
+            'rating.required' => 'The rating field is required.',
+            'comment.required' => 'The comment field is required.',
+            'comment.string' => 'The comment must be a string.',
+            'comment.max' => 'The comment must not exceed 1000 characters.'
         ]);
 
         // Verify course completion
@@ -88,18 +93,24 @@ class FeedbackController extends Controller
         $request->validate([
             'rating' => 'required|integer|between:1,5',
             'comment' => 'required|string|max:1000'
+        ], [
+            'rating.required' => 'The rating field is required.',
+            'rating.integer' => 'The rating must be an integer.',
+            'rating.between' => 'The rating must be between 1 and 5.',
+            'comment.required' => 'The comment field is required.',
+            'comment.string' => 'The comment must be a string.',
+            'comment.max' => 'The comment must not exceed 1000 characters.'
         ]);
-    
         $feedback = Feedback::where('user_id', Auth::id())->findOrFail($feedbackId);
-    
+
         $feedback->update([
             'rating' => $request->rating,
             'comment' => $request->comment
         ]);
-    
+
         return redirect()->back()->with('success', 'Feedback updated successfully');
     }
-    
+
 
     public function destroy($feedbackId)
     {
@@ -111,16 +122,20 @@ class FeedbackController extends Controller
                     });
                 });
         })->findOrFail($feedbackId);
-    
+
         $feedback->delete();
-    
+
         return redirect()->back()->with('success', 'Feedback deleted successfully');
     }
-    
+
     public function report(Request $request, $feedbackId)
     {
         $request->validate([
             'reason' => 'required|string|max:500'
+        ], [
+            'reason.required' => 'The reason field is required.',
+            'reason.string' => 'The reason must be a string.',
+            'reason.max' => 'The reason must not exceed 500 characters.'
         ]);
 
         $feedback = Feedback::findOrFail($feedbackId);

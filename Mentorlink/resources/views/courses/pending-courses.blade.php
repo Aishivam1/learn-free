@@ -188,6 +188,20 @@
             color: #999;
         }
 
+        .course .content .description {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+            height: 80px;
+            /* Fixed height for description - increased from index.blade.php */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            /* Show 4 lines of text */
+            -webkit-box-orient: vertical;
+        }
+
         .badge {
             position: absolute;
             top: 10px;
@@ -344,7 +358,7 @@
                     console.log(`Reject Button Clicked: Course ID = ${courseId}`);
 
                     rejectForm.action =
-                    `${window.location.origin}/admin/courses/${courseId}/reject`;
+                        `${window.location.origin}/admin/courses/${courseId}/reject`;
                     console.log(`Form Action Set: ${rejectForm.action}`);
 
                     rejectModal.classList.remove('hidden');

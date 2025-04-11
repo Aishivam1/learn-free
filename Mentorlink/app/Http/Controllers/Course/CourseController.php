@@ -77,7 +77,10 @@ class CourseController extends Controller
     public function show($id)
     {
         $course = Course::with(['materials', 'feedback.user'])->findOrFail($id);
-        return view('courses.show', compact('course'));
+        $isEnrolled = Auth::check() ? Enrollment::where('user_id', Auth::id())
+        ->where('course_id', $id)
+        ->exists() : false;
+        return view('courses.show', compact('course', 'isEnrolled'));
     }
 
 
@@ -103,7 +106,6 @@ class CourseController extends Controller
             'videos.*.mimes' => 'Only MP4, MKV, AVI, and MOV videos are allowed.',
             'pdfs.*.mimes' => 'Only PDF files are allowed.',
         ]);
-        dd($request->all());
 
 
         $course = Course::create([
@@ -184,27 +186,48 @@ class CourseController extends Controller
     {
         $course = Course::where('mentor_id', Auth::id())->findOrFail($courseId);
 
+       
         $request->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'nullable|string|max:255',
-            'difficulty' => 'nullable|in:Beginner,Intermediate,Advanced',
-            'videos.*' => 'nullable|mimes:mp4,mkv,avi,mov|max:51200',
-            'pdfs.*' => 'nullable|mimes:pdf|max:10240',
-            'remove_videos' => 'nullable|array',
-            'remove_pdfs' => 'nullable|array',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => 'required|string|max:255',
+            'difficulty' => 'required|in:Beginner,Intermediate,Advanced',
+            'videos' => 'required|array|min:1', // Ensure at least one video is uploaded
+            'videos.*' => 'file|mimes:mp4,mkv,avi,mov|max:51200',
+            'pdfs' => 'nullable|array|min:1',
+            'pdfs.*' => 'file|mimes:pdf|max:10240'
+        ], [
+            'videos.required' => 'Please upload at least one video.',
+            'videos.min' => 'Please upload at least one video.',
+            'videos.*.mimes' => 'Only MP4, MKV, AVI, and MOV videos are allowed.',
+            'pdfs.*.mimes' => 'Only PDF files are allowed.',
         ]);
+        // Initialize a flag to track if any changes were made
+        $changes = false;
 
-        $course->update($request->only(['title', 'description', 'category', 'difficulty']));
+        // Check if basic course details were updated
+        $updateData = $request->only(['title', 'description', 'category', 'difficulty']);
+        if (array_filter($updateData)) {
+            $course->update($updateData);
+            $changes = true;
+        }
 
         // Remove selected materials
-        Material::whereIn('id', (array) $request->remove_videos)
-            ->where('course_id', $courseId)
-            ->delete();
+        $removedVideos = (array) $request->remove_videos;
+        if (!empty($removedVideos)) {
+            Material::whereIn('id', $removedVideos)
+                ->where('course_id', $courseId)
+                ->delete();
+            $changes = true;
+        }
 
-        Material::whereIn('id', (array) $request->remove_pdfs)
-            ->where('course_id', $courseId)
-            ->delete();
+        $removedPdfs = (array) $request->remove_pdfs;
+        if (!empty($removedPdfs)) {
+            Material::whereIn('id', $removedPdfs)
+                ->where('course_id', $courseId)
+                ->delete();
+            $changes = true;
+        }
 
         // Handle new video uploads
         if ($request->hasFile('videos')) {
@@ -216,6 +239,7 @@ class CourseController extends Controller
                     'file_path' => $videoPath,
                     'name' => $video->getClientOriginalName()
                 ]);
+                $changes = true;
             }
         }
 
@@ -229,16 +253,26 @@ class CourseController extends Controller
                     'file_path' => $pdfPath,
                     'name' => $pdf->getClientOriginalName()
                 ]);
+                $changes = true;
             }
         }
 
-        return redirect()->route('course.index')->with('success', 'Course updated successfully.');
+        // Check if any changes were made
+        if (!$changes) {
+            return redirect()->route('courses.index')->with('info', 'No changes were made to the course.');
+        }
+
+        return redirect()->route('courses.index')->with('success', 'Course updated successfully.');
     }
     public function rejectedCourses()
     {
-        $rejectedCourses = Course::where('status', 'rejected')->get();
+        $rejectedCourses = Course::where('status', 'rejected')
+            ->where('mentor_id', auth()->id()) // use correct column name
+            ->get();
+
         return view('courses.rejected', compact('rejectedCourses'));
     }
+
 
     // Delete a course (Mentors Only)
     public function destroy($id)

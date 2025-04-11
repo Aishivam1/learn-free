@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const mainContainer = document.querySelector(".container.min-height-100vh");
     // === Navbar Functionality ===
     const navbarToggler = document.getElementById("navbarToggler");
     const navbarContent = document.getElementById("navbarContent");
@@ -7,65 +8,155 @@ document.addEventListener("DOMContentLoaded", function () {
         navbarToggler.addEventListener("click", function () {
             navbarToggler.classList.toggle("active");
             navbarContent.classList.toggle("show");
-        });
-    }
-
-    // === Discussions Dropdown Functionality ===
-    const discussionsToggle = document.getElementById("discussionsDropdownToggle");
-    const discussionsMenu = document.getElementById("discussionsDropdownMenu");
-
-    if (discussionsToggle && discussionsMenu) {
-        // Initially hide the dropdown
-        discussionsMenu.style.display = "none";
-
-        discussionsToggle.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            // Toggle display
-            const isHidden = discussionsMenu.style.display === "none";
-            discussionsMenu.style.display = isHidden ? "block" : "none";
-
-            // For desktop: Position dropdown below toggle
-            if (window.innerWidth > 991) {
-                const toggleRect = discussionsToggle.getBoundingClientRect();
-                discussionsMenu.style.top = toggleRect.bottom + "px";
-                discussionsMenu.style.left = toggleRect.left + "px";
+            if (mainContainer) {
+                mainContainer.style.zIndex = navbarContent.classList.contains(
+                    "show"
+                )
+                    ? "-1"
+                    : "";
             }
         });
     }
 
-    // === Profile Dropdown Functionality ===
+    // === Unified Dropdown Functionality ===
+    const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
+    const dropdownMenus = document.querySelectorAll(".dropdown-menu");
     const profileToggle = document.getElementById("profileDropdownToggle");
     const profileMenu = document.getElementById("profileDropdownMenu");
 
+    // Function to close all dropdowns
+    const closeAllDropdowns = (exceptMenu = null) => {
+        dropdownMenus.forEach((menu) => {
+            if (menu !== exceptMenu) {
+                menu.style.display = "none";
+                menu.classList.remove("show");
+            }
+        });
+        if (profileMenu && profileMenu !== exceptMenu) {
+            profileMenu.style.display = "none";
+            profileMenu.classList.remove("show");
+        }
+    };
+
+    // Setup main nav dropdowns
+    dropdownToggles.forEach((toggle) => {
+        toggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const dropdownId = this.id.replace("Toggle", "Menu");
+            const dropdown = document.getElementById(dropdownId);
+
+            if (!dropdown) return;
+
+            // Close other dropdowns
+            closeAllDropdowns(dropdown);
+
+            // Toggle current dropdown
+            const isHidden =
+                dropdown.style.display === "none" ||
+                !dropdown.classList.contains("show");
+
+            if (isHidden) {
+                dropdown.style.display = "block";
+                dropdown.classList.add("show");
+
+                // Position dropdown for desktop
+                if (window.innerWidth > 991) {
+                    const toggleRect = toggle.getBoundingClientRect();
+                    dropdown.style.top = toggleRect.bottom + "px";
+                    dropdown.style.left = toggleRect.left + "px";
+                }
+            } else {
+                dropdown.style.display = "none";
+                dropdown.classList.remove("show");
+            }
+
+            // Manage container z-index
+            const mainContainer = document.querySelector(
+                ".container.min-height-100vh"
+            );
+            if (mainContainer) {
+                mainContainer.style.zIndex = isHidden ? "-1" : "";
+            }
+        });
+    });
+
+    // Setup profile dropdown
     if (profileToggle && profileMenu) {
-        profileToggle.addEventListener("click", function (event) {
-            event.stopPropagation();
-            profileMenu.classList.toggle("show");
+        // Initially hide the profile dropdown
+        profileMenu.style.display = "none";
+
+        profileToggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Close other dropdowns
+            closeAllDropdowns(profileMenu);
+
+            // Toggle profile dropdown
+            const isHidden =
+                profileMenu.style.display === "none" ||
+                !profileMenu.classList.contains("show");
+
+            if (isHidden) {
+                profileMenu.style.display = "block";
+                profileMenu.classList.add("show");
+
+                // Position profile dropdown
+                const toggleRect = profileToggle.getBoundingClientRect();
+                profileMenu.style.top = toggleRect.bottom + "px";
+                profileMenu.style.right =
+                    window.innerWidth - toggleRect.right + "px";
+                profileMenu.style.left = "auto"; // Reset left position
+            } else {
+                profileMenu.style.display = "none";
+                profileMenu.classList.remove("show");
+            }
+
+            // Manage container z-index
+            const mainContainer = document.querySelector(
+                ".container.min-height-100vh"
+            );
+            if (mainContainer) {
+                mainContainer.style.zIndex = isHidden ? "-1" : "";
+            }
+        });
+
+        // Add hover animation for profile image
+        profileToggle.addEventListener("mouseenter", () => {
+            gsap.to(profileToggle, {
+                scale: 1.1,
+                duration: 0.3,
+                ease: "power1.out",
+            });
+        });
+
+        profileToggle.addEventListener("mouseleave", () => {
+            gsap.to(profileToggle, {
+                scale: 1,
+                duration: 0.3,
+                ease: "power1.out",
+            });
         });
     }
 
-    // === Close Dropdowns When Clicking Outside ===
-    document.addEventListener("click", function (event) {
-        // Close discussion dropdown
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", function (e) {
         if (
-            discussionsMenu &&
-            discussionsToggle &&
-            !discussionsToggle.contains(event.target) &&
-            !discussionsMenu.contains(event.target)
+            !e.target.closest(".nav-item") &&
+            !e.target.closest(".profile-dropdown") &&
+            !e.target.closest(".dropdown-menu")
         ) {
-            discussionsMenu.style.display = "none";
-        }
+            closeAllDropdowns();
 
-        // Close profile dropdown
-        if (
-            profileMenu &&
-            profileToggle &&
-            !profileToggle.contains(event.target) &&
-            !profileMenu.contains(event.target)
-        ) {
-            profileMenu.classList.remove("show");
+            // Reset container z-index
+            const mainContainer = document.querySelector(
+                ".container.min-height-100vh"
+            );
+            if (mainContainer) {
+                mainContainer.style.zIndex = "";
+            }
         }
     });
 
@@ -110,32 +201,35 @@ document.addEventListener("DOMContentLoaded", function () {
         duration: 1,
         stagger: 0.1,
     });
+});
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("Alert script loaded");
 
-    // Alert handling
-    const alerts = document.querySelectorAll(".alert");
+    // Ensure alerts exist
+    console.log("Alerts found:", document.querySelectorAll(".alert"));
 
     function hideAlert(alert) {
-        alert.style.transition = "max-height 0.5s ease-out, opacity 0.5s ease-out";
-        alert.style.maxHeight = "0";
+        if (!alert) return;
+
+        alert.classList.remove("show"); // Bootstrap fade out
+        alert.style.transition = "opacity 0.5s ease-out";
         alert.style.opacity = "0";
-        alert.style.overflow = "hidden";
-        alert.style.padding = "0";
 
         setTimeout(() => {
-            alert.classList.remove("d-flex");
-            alert.style.display = "none";
+            alert.remove(); // Remove alert from DOM after fade out
         }, 500);
     }
 
-    document.querySelectorAll(".btn-close").forEach((button) => {
-        button.addEventListener("click", function () {
-            const alert = this.closest(".alert");
+    // Event delegation for closing alerts
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("btn-close")) {
+            const alert = event.target.closest(".alert");
             hideAlert(alert);
-        });
+        }
     });
 
     // Auto-hide alerts after 3 seconds
-    alerts.forEach((alert) => {
+    document.querySelectorAll(".alert").forEach((alert) => {
         setTimeout(() => {
             hideAlert(alert);
         }, 3000);

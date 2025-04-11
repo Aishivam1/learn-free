@@ -105,17 +105,17 @@ class Feedback extends Model
     protected static function boot()
     {
         parent::boot();
-
+    
         static::created(function ($feedback) {
- 
             // Award points for feedback
             User::where('id', $feedback->user_id)->increment('points', 10);
-
+    
             // Update course rating cache
             Cache::tags(['course_ratings'])->forget(
                 'course_rating_' . $feedback->course_id
             );
         });
+    
 
         static::deleted(function ($feedback) {
             // Update course rating cache

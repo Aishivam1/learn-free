@@ -53,7 +53,6 @@ class ProfileController extends Controller
         if ($request->has('avatar') && in_array($request->avatar, $availableAvatars)) {
             $user->avatar = $request->avatar;
         }
-
         $user->fill($request->only(['name', 'bio']));
         $user->save();
 

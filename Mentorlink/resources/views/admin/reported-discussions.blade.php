@@ -68,7 +68,7 @@
                                         <li>
                                             <form action="{{ route('discussions.dismiss-reports', $discussion->id) }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="dropdown-item">Dismiss Reports</button>
+                                                <button type="submit" class="dropdown-item">Dismiss</button>
                                             </form>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
@@ -76,7 +76,7 @@
                                             <form action="{{ route('discussions.delete', $discussion->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this discussion?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger">Delete Discussion</button>
+                                                <button type="submit" class="dropdown-item text-danger">Delete </button>
                                             </form>
                                         </li>
                                     </ul>

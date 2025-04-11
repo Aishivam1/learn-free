@@ -39,8 +39,7 @@ class DashboardController extends Controller
 
         if ($user->role == 'admin') {
             $data = array_merge($data, $this->getAdminData()); // ✅ Ensure this line exists
-        }
-        elseif ($user->role == 'mentor') {
+        } elseif ($user->role == 'mentor') {
             $data['mentor'] = $this->getMentorData($user); // ✅ Ensures $mentor is passed correctly
         }
         return view('dashboard.dashboard', $data);
@@ -69,9 +68,10 @@ class DashboardController extends Controller
      */
     private function getEnrolledCourses($user)
     {
-        return Course::whereHas('enrollments', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })->get();
+        return Course::select('courses.*', 'enrollments.progress')
+            ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+            ->where('enrollments.user_id', $user->id)
+            ->get();
     }
 
     /**
@@ -169,50 +169,50 @@ class DashboardController extends Controller
      *
      * @return array
 
- * Get quiz success trends data.
- *
- * @return array
- */
-private function getQuizSuccessData()
-{
-    $quizAttempts = DB::table('quiz_attempts')
-    ->selectRaw("DATE(attempted_at) as date, COUNT(*) as total_attempts, SUM(passed) as passed_attempts")
-    ->groupBy('date')
-    ->orderBy('date', 'ASC')
-    ->get();
+     * Get quiz success trends data.
+     *
+     * @return array
+     */
+    private function getQuizSuccessData()
+    {
+        $quizAttempts = DB::table('quiz_attempts')
+            ->selectRaw("DATE(attempted_at) as date, COUNT(*) as total_attempts, SUM(passed) as passed_attempts")
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
 
 
-    $labels = [];
-    $data = [];
+        $labels = [];
+        $data = [];
 
-    foreach ($quizAttempts as $attempt) {
-        $labels[] = $attempt->date;
-        $successRate = ($attempt->total_attempts > 0) ? round(($attempt->passed_attempts / $attempt->total_attempts) * 100, 2) : 0;
-        $data[] = $successRate;
+        foreach ($quizAttempts as $attempt) {
+            $labels[] = $attempt->date;
+            $successRate = ($attempt->total_attempts > 0) ? round(($attempt->passed_attempts / $attempt->total_attempts) * 100, 2) : 0;
+            $data[] = $successRate;
+        }
+
+        return [
+            'labels' => $labels,
+            'data'   => $data,
+        ];
     }
 
-    return [
-        'labels' => $labels,
-        'data'   => $data,
-    ];
-}
 
-
-private function getAdminData()
-{
-    return [
-        'totalUsers'         => User::count(),
-        'totalCourses'       => Course::count(),
-        'totalEnrollments'   => DB::table('enrollments')->count(),
-        'quizPassRate'       => $this->calculateQuizPassRate(),
-        'usersGrowthData'    => array_values($this->getUsersGrowthData()),
-        'usersGrowthLabels'  => array_keys($this->getUsersGrowthData()),
-        'courseCompletionLabels' => $this->getCourseCompletionData()['labels'],
-        'courseCompletionData'   => $this->getCourseCompletionData()['data'],
-        'quizSuccessLabels'  => $this->getQuizSuccessData()['labels'],
-        'quizSuccessData'    => $this->getQuizSuccessData()['data'],
-    ];
-}
+    private function getAdminData()
+    {
+        return [
+            'totalUsers'         => User::count(),
+            'totalCourses'       => Course::count(),
+            'totalEnrollments'   => DB::table('enrollments')->count(),
+            'quizPassRate'       => $this->calculateQuizPassRate(),
+            'usersGrowthData'    => array_values($this->getUsersGrowthData()),
+            'usersGrowthLabels'  => array_keys($this->getUsersGrowthData()),
+            'courseCompletionLabels' => $this->getCourseCompletionData()['labels'],
+            'courseCompletionData'   => $this->getCourseCompletionData()['data'],
+            'quizSuccessLabels'  => $this->getQuizSuccessData()['labels'],
+            'quizSuccessData'    => $this->getQuizSuccessData()['data'],
+        ];
+    }
 
 
     /**

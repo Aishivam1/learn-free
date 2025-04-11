@@ -39,15 +39,7 @@ class CourseApprovalController extends Controller
 
         $course->status = 'approved';
 
-        // Remove or comment out this line:
-        // $course->rejection_reason = null;
-
         $course->save();
-
-        // Notify mentor (if notifications exist)
-        // if (method_exists($course->mentor, 'notify')) {
-        //     $course->mentor->notify(new CourseApproved($course));
-        // }
 
         return back()->with('success', 'Course approved successfully.');
     }

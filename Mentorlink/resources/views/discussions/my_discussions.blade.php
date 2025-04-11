@@ -10,7 +10,7 @@
         </div>
         <div class="col-md-4 text-md-end">
             <a href="{{ route('discussions.create') }}" class="btn btn-primary">Start New Discussion</a>
-            <a href="{{ route('discussions.index') }}" class="btn btn-outline-secondary ms-2">All Discussions</a>
+            <a href="{{ route('discussions.index') }}" class="btn btn-outline-primary ms-2">All Discussions</a>
         </div>
     </div>
 

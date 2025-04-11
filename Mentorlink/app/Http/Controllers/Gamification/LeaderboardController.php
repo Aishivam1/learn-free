@@ -20,11 +20,11 @@ class LeaderboardController extends Controller
         $category = $request->query('category', 'courses'); // Default category is 'courses'
 
         // Global Leaderboard (Top 10 users by total points)
-        $globalLeaderboard = User::select('id', 'name', 'points', 'avatar')
+        $globalLeaderboard = User::select('id', 'name', 'points', 'avatar', 'role')
+            ->where('points', '>', 0)
             ->orderByDesc('points')
-            ->limit(10)
-            ->get();
-
+            ->paginate(15);
+            
         // Weekly Leaderboard (Points earned in the current week)
         $weeklyLeaderboard = Cache::remember('weekly_leaderboard', 3600, function () {
             return User::select('id', 'name', 'avatar', 'points')
@@ -62,7 +62,7 @@ class LeaderboardController extends Controller
                         ->get();
             }
         });
- 
+
         return view('leaderboard', [
             'globalLeaderboard' => $globalLeaderboard,
             'weeklyLeaderboard' => $weeklyLeaderboard,

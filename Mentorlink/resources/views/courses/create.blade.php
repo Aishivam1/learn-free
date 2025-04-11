@@ -13,15 +13,7 @@
                 <h2>Create a New Course</h2>
 
                 <!-- Display validation errors -->
-                @if ($errors->any())
-                    <div class="error-message">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                
 
                 <form method="POST" action="{{ route('courses.store') }}" enctype="multipart/form-data">
                     @csrf

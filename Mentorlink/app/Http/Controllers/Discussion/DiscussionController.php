@@ -26,9 +26,21 @@ class DiscussionController extends Controller
             return redirect()->route('login')->with('error', 'You must be logged in to view discussions.');
         }
 
-
         $user = Auth::user();
-        $query = Discussion::whereNull('parent_id')->with(['user:id,name,avatar', 'course:id,title'])->withCount('replies');
+        $query = Discussion::whereNull('parent_id')
+            ->with(['user:id,name,avatar', 'course:id,title'])
+            ->withCount('replies');
+
+        // Get courses based on user role
+        if ($user->isMentor()) {
+            // For mentors, only show their created courses in the filter
+            $courses = Course::select('id', 'title')
+                ->where('mentor_id', $user->id)
+                ->get();
+        } else {
+            // For learners and admins, show all courses
+            $courses = Course::select('id', 'title')->get();
+        }
 
         // Filtering
         if ($request->has('course_id')) {
@@ -45,14 +57,12 @@ class DiscussionController extends Controller
         if ($user->isMentor()) {
             $mentorCourses = Course::where('mentor_id', $user->id)->pluck('id');
             $query->whereIn('course_id', $mentorCourses);
-        } elseif ($user->isLearner()) {
-            $enrolledCourses = DB::table('enrollments')->where('user_id', $user->id)->pluck('course_id');
-            $query->whereIn('course_id', $enrolledCourses);
         }
-        // Admin can see all discussions (no filter needed)
+        // Remove the learner access control restriction
+        // Now learners can see all discussions
 
         // Sorting
-        $sort = $request->input('sort', 'latest'); // Default sorting: latest
+        $sort = $request->input('sort', 'latest');
         if ($sort === 'oldest') {
             $query->oldest();
         } else {
@@ -60,9 +70,18 @@ class DiscussionController extends Controller
         }
 
         $discussions = $query->paginate(15);
-        $courses = Course::select('id', 'title')->get(); // Fetch all courses for filtering
 
-        return view('discussions.index', compact('discussions', 'courses'));
+        // Get current date/time and user info
+        $currentDateTime = now()->setTimezone('UTC')->format('Y-m-d H:i:s');
+        $currentUser = $user->name;
+
+        return view('discussions.index', compact(
+            'discussions',
+            'courses',
+            'currentDateTime',
+            'currentUser',
+            'user' // Pass the user object to the view
+        ));
     }
     public function listByCourse($courseId)
     {

@@ -2,10 +2,6 @@
 
 @section('title', 'Attempt Quiz - ' . $course->title)
 
-@extends('layouts.app')
-
-@section('title', 'Attempt Quiz - ' . $course->title)
-
 @push('styles')
 <style>
     /* Main Layout */

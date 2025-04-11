@@ -103,4 +103,20 @@ class MaterialController extends Controller
             ->where('course_id', $courseId)
             ->update(['progress' => $overallProgress]);
     }
+    public function destroy($id)
+    {
+        $material = Material::find($id);
+        
+        if (!$material) {
+            return response()->json(['message' => 'Material not found'], 404);
+        }
+
+        if ($material->course->mentor_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $material->delete();
+        
+        return response()->json(['message' => 'Material deleted successfully'], 200);
+    }
 }

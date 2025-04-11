@@ -15,17 +15,17 @@ class AdminController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'role:admin']);
+        $this->middleware('auth');
     }
 
     public function dashboardMetrics()
     {
         // Get or calculate metrics
-        $metrics = Cache::remember('admin_dashboard_metrics', 3600, function() {
+        $metrics = Cache::remember('admin_dashboard_metrics', 3600, function () {
             $totalUsers = User::count();
             $totalCourses = Course::count();
             $totalEnrollments = DB::table('enrollments')->count();
-            
+
             $quizSuccessRate = QuizAttempt::where('passed', true)
                 ->count() / QuizAttempt::count() * 100;
 
@@ -64,7 +64,7 @@ class AdminController extends Controller
 
     private function getActiveUsersCount($period)
     {
-        $date = match($period) {
+        $date = match ($period) {
             'today' => now()->startOfDay(),
             'week' => now()->startOfWeek(),
             'month' => now()->startOfMonth(),
@@ -79,12 +79,12 @@ class AdminController extends Controller
         $query = User::query();
 
         // Apply filters
-        if ($request->role) {
+        if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
                     ->orWhere('email', 'like', "%{$request->search}%");
             });
@@ -95,12 +95,30 @@ class AdminController extends Controller
         $sortOrder = $request->sort_order ?? 'desc';
         $query->orderBy($sortField, $sortOrder);
 
-        $users = $query->with(['enrollments', 'badges'])
-            ->withCount(['completedCourses', 'quizAttempts'])
+        // Simplified eager loading and counts to avoid relationship issues
+        $users = $query->with('enrollments')
             ->paginate(15);
 
-        return response()->json($users);
+        // Get available roles for filter dropdown
+        $roles = User::distinct('role')->pluck('role')->filter();
+
+        // Return Blade view with data
+        return view('admin.users.index', compact('users', 'roles'));
     }
+
+    // Add this method to handle user deletion
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+
+    
+
+        // Delete the user
+        $user->delete();
+
+        return redirect()->route('admin.users')->with('success', 'User deleted successfully.');
+    }
+
 
     public function listCourses(Request $request)
     {
@@ -139,9 +157,9 @@ class AdminController extends Controller
         ]);
 
         $analytics = AdminDashboardAnalytics::whereBetween('created_at', [
-                $request->start_date,
-                $request->end_date
-            ])
+            $request->start_date,
+            $request->end_date
+        ])
             ->get();
 
         // Calculate trends

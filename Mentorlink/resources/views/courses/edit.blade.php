@@ -12,15 +12,7 @@
                 <h2>Edit Course</h2>
 
                 <!-- Display validation errors -->
-                @if ($errors->any())
-                    <div class="error-message">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+              
 
                 <form method="POST" action="{{ route('courses.update', $course->id) }}" enctype="multipart/form-data">
                     @csrf
@@ -76,7 +68,10 @@
                     <ul id="videoList">
                         <span id="existingVideoList">
                             @foreach ($course->materials->where('type', 'video') as $video)
-                                <li>{{ $video->name }}</li>
+                                <li>
+                                    {{ $video->name }}
+                                    <button type="button" class="delete-btn" data-id="{{ $video->id }}">x</button>
+                                </li>
                             @endforeach
                         </span>
                     </ul>
@@ -90,7 +85,9 @@
                     <ul id="pdfList">
                         <span id="existingPdfList">
                             @foreach ($course->materials->where('type', 'pdf') as $pdf)
-                                <li>{{ $pdf->name }}</li>
+                                <li>{{ $pdf->name }}
+                                    <button type="button" class="delete-btn" data-id="{{ $pdf->id }}">x</button>
+                                </li>
                             @endforeach
                         </span>
                     </ul>
@@ -157,7 +154,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-        
+
 
         .create-course-page .container form button {
             padding: 10px;
@@ -210,23 +207,39 @@
             background-color: white;
             color: #007bff;
         }
-        .create-course-page .back-btn1 {
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    transition: background-color 0.3s ease;
-}
 
-.create-course-page .back-btn1:hover {
-    background-color: #0056b3;
-}
+        .create-course-page .back-btn1 {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .create-course-page .back-btn1:hover {
+            background-color: #0056b3;
+        }
+
+        .delete-btn {
+        background-color: #dc3545!important;
+        color: white;
+        border: none;
+        height: 15px;
+        width: 15px;
+        padding: 0px!important;
+        border-radius: 50%;
+        cursor: pointer;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10px;
+    }
     </style>
 @endpush
 
@@ -255,6 +268,32 @@
 
             document.getElementById('pdfUpload').addEventListener('change', function() {
                 displayFileNames(this, 'pdfList', 'existingPdfList');
+            });
+
+            // Add event listeners for delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const materialId = this.dataset.id;
+                    const confirmed = confirm('Are you sure you want to delete this item?');
+
+                    if (confirmed) {
+                        // Make an AJAX request to delete the material
+                        fetch(`/materials/${materialId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json'
+                            }
+                        }).then(response => {
+                            if (response.ok) {
+                                // Remove the list item
+                                this.parentElement.remove();
+                            } else {
+                                alert('Failed to delete the material.');
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

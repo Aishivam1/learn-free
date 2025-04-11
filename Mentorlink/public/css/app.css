@@ -20,6 +20,7 @@ header {
     padding: 20px 50px;
     background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 1;
 }
 header .logo {
     font-size: 24px;
@@ -405,7 +406,7 @@ footer .social-icons a {
 
 .dropdown-menu {
     position: absolute;
-    top: 50px; /* Adjusts dropdown below the profile image */
+    top: 50px; 
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -416,15 +417,18 @@ footer .social-icons a {
 }
 
 .dropdown-menu a {
-    padding: 10px 15px;
+
     display: block;
+    text-align: left;
     text-decoration: none;
-    color: #333;
+    color: #007bff;
     transition: background 0.3s;
 }
 
 .dropdown-menu a:hover {
-    background: #f5f5f5;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 15px;
 }
 
 /* Show dropdown on hover */
@@ -486,7 +490,7 @@ footer .social-icons a {
 
 .dropdown-menu1 {
     position: absolute;
-    z-index: 1000;
+    z-index: 99999 !important;
     min-width: 200px;
     padding: 0.5rem 0;
     margin: 0;
@@ -499,22 +503,23 @@ footer .social-icons a {
 
 .dropdown-item {
     display: block;
-    width: 100%;
-    padding: 0.25rem 1.5rem;
+    padding: 0.25rem!important;
     clear: both;
+    min-width: 100px;
     text-align: inherit;
     white-space: nowrap;
     background-color: transparent;
     border: 0;
     text-decoration: none;
-    color: #212529;
+    color: #1c61a5;
 }
 
 .dropdown-item:hover,
 .dropdown-item:focus {
-    color: #16181b;
+    color: #ffffff!important;
     text-decoration: none;
-    background-color: #f8f9fa;
+    background-color: #007cf8!important;
+    border-radius: 10px!important;
 }
 
 .dropdown-divider {
@@ -541,6 +546,7 @@ header {
     padding: 1rem;
     background: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 1;
 }
 
 .logo {
@@ -561,6 +567,7 @@ header {
     align-items: center;
     flex-grow: 1;
     justify-content: space-between;
+    flex-basis: 0% !important;
 }
 
 nav {
@@ -655,7 +662,7 @@ nav a {
 
 /* Dropdown styles */
 .nav-item.dropdown {
- color: #;
+    color: #007bff;
     position: relative;
 }
 
@@ -665,14 +672,13 @@ nav a {
     min-width: 200px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
-    z-index: 1000 !important;
+    top: 47px;
     display: none;
     left: 0px !important;
 }
 
 .dropdown-item {
     display: block;
-    padding: 8px 16px;
     text-decoration: none;
     color: #333;
 }
@@ -689,7 +695,12 @@ nav a {
     font-size: 0.875rem;
     font-weight: bold;
 }
-
+#dashboardDropdownMenu {
+    position: absolute !important; /* Ensures it floats above content */
+    z-index: 99999 !important; /* Higher than most elements */
+    border-radius: 5px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+}
 /* Responsive styles */
 @media (max-width: 991px) {
     header {

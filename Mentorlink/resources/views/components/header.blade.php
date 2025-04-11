@@ -2,24 +2,85 @@
     <div class="logo">
         <img src="{{ asset('favicon.png') }}" alt="Favicon" class="favicon">MentorLink
     </div>
-    
+
     <!-- Add the header toggle button -->
     <button class="navbar-toggler" id="navbarToggler">
         <span class="navbar-toggler-icon"></span>
     </button>
-    
+
     <!-- Wrap navigation in a collapsible container -->
     <div class="navbar-collapse" id="navbarContent">
         <nav>
-            @guest
-                <a href="{{ route('home') }}">Home</a>
-            @else
-                <a href="{{ route('dashboard') }}">Dashboard</a>
-            @endguest
-            <a href="{{ route('courses.index') }}">Courses</a>
-            <a href="{{ route('leaderboard') }}">Leaderboard</a>
-            <a href="{{ route('certificates.index') }}">Certificate</a>
-            
+            <!-- Home/Dashboard Dropdown -->
+            <div class="nav-item dropdown">
+                @guest
+                    <a href="#" class="dropdown-toggle" id="homeDropdownToggle">Home</a>
+                    <div class="dropdown-menu" id="homeDropdownMenu">
+                        <a class="dropdown-item" href="{{ route('home') }}">Home</a>
+
+                    </div>
+                @else
+                    <a href="#" class="dropdown-toggle" id="dashboardDropdownToggle">Dashboard</a>
+                    <div class="dropdown-menu" id="dashboardDropdownMenu">
+                        <a class="dropdown-item" href="{{ route('dashboard') }}">My Dashboard</a>
+                        <a class="dropdown-item" href="{{ route('profile.edit') }}">Profile Settings</a>
+                    </div>
+                @endguest
+            </div>
+
+            <!-- Courses Dropdown -->
+            <div class="nav-item dropdown">
+                <a href="#" class="dropdown-toggle" id="coursesDropdownToggle">Courses</a>
+                <div class="dropdown-menu" id="coursesDropdownMenu">
+                    <a class="dropdown-item" href="{{ route('courses.index') }}">All Courses</a>
+                    @auth
+                        @if (Auth::user()->role === 'learner')
+                            <a class="dropdown-item" href="{{ route('courses.my') }}">My Courses</a>
+                        @endif
+                        @if (Auth::user()->role === 'mentor')
+                            <a class="dropdown-item" href="{{ route('courses.create') }}">Create Course</a>
+                            <a class="dropdown-item" href="{{ route('courses.rejected') }}">Rejected Courses</a>
+                        @endif
+                    @endauth
+                </div>
+            </div>
+
+            <!-- Leaderboard Dropdown -->
+            <div class="nav-item dropdown">
+                <a href="#" class="dropdown-toggle" id="leaderboardDropdownToggle">Leaderboard</a>
+                <div class="dropdown-menu" id="leaderboardDropdownMenu">
+                    <a class="dropdown-item" href="{{ route('leaderboard') }}">Leaderboard</a>
+                    @auth
+                        @if (Auth::user()->role !== 'admin')
+                            <a class="dropdown-item" href="{{ route('badges.index') }}">My Badges</a>
+                        @endif
+                    @endauth
+                </div>
+            </div>
+            @auth
+                @if (Auth::user()->role === 'lerner')
+                    <!-- Certificates Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="dropdown-toggle" id="certificatesDropdownToggle">Certificate</a>
+                        <div class="dropdown-menu" id="certificatesDropdownMenu">
+                            <a class="dropdown-item" href="{{ route('certificates.index') }}">My Certificates</a>
+                        </div>
+                    </div>
+                @endif
+            @endauth
+            @auth
+                @if (Auth::user()->role === 'admin')
+                    <!-- Certificates Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="dropdown-toggle" id="certificatesDropdownToggle">All users</a>
+                        <div class="dropdown-menu" id="certificatesDropdownMenu">
+                            <a class="dropdown-item" href="{{ route('admin.users') }}">Users</a>
+                        </div>
+                    </div>
+                @endif
+            @endauth
+
+            <!-- Discussions Dropdown (Existing) -->
             <div class="nav-item dropdown">
                 <a href="#" class="dropdown-toggle" id="discussionsDropdownToggle">Discussions</a>
                 <div class="dropdown-menu" id="discussionsDropdownMenu">
@@ -29,22 +90,26 @@
                             <a class="dropdown-item" href="{{ route('discussions.my') }}">My Discussions</a>
                             <a class="dropdown-item" href="{{ route('discussions.create') }}">Start New Discussion</a>
                         @endif
-                        {{-- @if (isset($userCourses) && count($userCourses) > 0)
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">Course Discussions</h6>
-                            @foreach ($userCourses as $course)
-                                <a class="dropdown-item" href="{{ route('discussions.list', $course->id) }}">
-                                    {{ $course->title }}
-                                </a>
-                            @endforeach
-                        @endif --}}
                     @endauth
                 </div>
             </div>
-            
-            <a href="{{ route('about') }}">About</a>
+
+            <!-- About Dropdown -->
+            <div class="nav-item dropdown">
+                <a href="#" class="dropdown-toggle" id="aboutDropdownToggle">About</a>
+                <div class="dropdown-menu" id="aboutDropdownMenu">
+                    <a class="dropdown-item" href="{{ route('about') }}">About Us</a>
+                    <a class="dropdown-item" href="{{ route('careers') }}">Careers</a>
+                    <a class="dropdown-item" href="{{ route('press') }}">Press</a>
+                    <a class="dropdown-item" href="{{ route('terms-of-service') }}">Terms of Service</a>
+                    <a class="dropdown-item" href="{{ route('privacy-policy') }}">Privacy Policy</a>
+                    <a class="dropdown-item" href="{{ route('contact') }}">Contact Us</a>
+                    <a class="dropdown-item" href="{{ route('help-center') }}">Help Center</a>
+                    <a class="dropdown-item" href="{{ route('faq') }}">FAQ</a>
+                </div>
+            </div>
         </nav>
-        
+
         <!-- Include auth buttons inside the collapsible container on mobile -->
         <div class="auth-buttons-mobile">
             @guest
@@ -53,7 +118,7 @@
             @endguest
         </div>
     </div>
-    
+
     <!-- Keep desktop auth buttons outside -->
     <div class="auth-buttons">
         @guest
@@ -90,7 +155,7 @@
             });
 
             // Staggered Nav Links
-            gsap.from("nav a", {
+            gsap.from(".nav-item .dropdown-toggle", {
                 duration: 0.8,
                 y: 20,
                 opacity: 0,
@@ -124,6 +189,35 @@
                     });
                 });
             }
+
+            // Setup dropdowns
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdownId = this.id.replace('Toggle', 'Menu');
+                    const dropdown = document.getElementById(dropdownId);
+
+                    // Close all other dropdowns first
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        if (menu.id !== dropdownId) {
+                            menu.classList.remove('show');
+                        }
+                    });
+
+                    // Toggle current dropdown
+                    dropdown.classList.toggle('show');
+                });
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.nav-item') && !e.target.closest('.profile-dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
         });
     </script>
 @endpush

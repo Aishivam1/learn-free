@@ -62,9 +62,23 @@
                         <div class="card-body">
                             <div class="discussion-header">
                                 <div class="user-info">
-                                    <img src="{{ asset('avatar/' . $discussion->user->avatar) }}" alt="Avatar"
-                                           class="avatar">
+                                    @php
+                                        $avatarName = $discussion->user->avatar;
+                                        $avatarPath = public_path('avatar/' . $avatarName);
+                                        $exists = file_exists($avatarPath);
 
+                                        // Debug log
+                                        \Log::info('Avatar Debug', [
+                                            'user_id' => $discussion->user->id,
+                                            'avatar_name' => $avatarName,
+                                            'avatar_path' => $avatarPath,
+                                            'exists' => $exists,
+                                            'public_path' => public_path(),
+                                        ]);
+                                    @endphp
+
+                                    <img src="{{ $avatarName && $exists ? url('avatar/' . rawurlencode($avatarName)) : url('avatar/default.png') }}"
+                                        alt="{{ $discussion->user->name }}" class="avatar">
                                     <div class="user-details">
                                         <h5 class="user-name">{{ $discussion->user->name }}</h5>
                                         <small class="post-meta">{{ $discussion->created_at->diffForHumans() }} in
