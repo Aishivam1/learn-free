@@ -30,5 +30,8 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-
+    'upi' => [
+        'personal_id' => env('UPI_PERSONAL_ID', 'your-upi-id@upi'),
+        'name' => env('UPI_NAME', 'Your Name'),
+    ],
 ];

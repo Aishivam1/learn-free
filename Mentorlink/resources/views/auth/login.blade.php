@@ -31,8 +31,11 @@
             <div class="login-link">
                 Don't have an account? <a href="{{ route('register') }}">Register</a>
             </div>
+            <a href="{{ route('password.request') }}"class="login-link">
+                {{ __('Forgot Your Password?') }}
+            </a>
             <div class="login-link">
-                Go back to <a href="{{ route('home') }}">  home🏠</a>
+                Go back to <a href="{{ route('home') }}"> home🏠</a>
             </div>
         </div>
     </div>

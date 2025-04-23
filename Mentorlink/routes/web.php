@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Learning\PaymentController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
@@ -15,7 +16,7 @@ use App\Http\Controllers\Gamification\LeaderboardController;
 use App\Http\Controllers\Feedback\FeedbackController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\HomeController;
-
+use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\Course\CourseApprovalController;
 use App\Http\Controllers\Learning\ProgressController;
@@ -51,10 +52,34 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/forgot-password', [AuthController::class, 'forgotPasswordForm'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
-    Route::get('/reset-password/{token}', [AuthController::class, 'resetPasswordForm'])->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+    // Password Reset Routes// Add this temporary test route
+
+    // Test mail route
+    Route::get('/test-mail', function () {
+        try {
+            Mail::raw('Test email from MentorLink', function ($message) {
+                $message->to('sp2481646@gmail.com')
+                    ->subject('Test Mail');
+            });
+
+            return 'Test email sent successfully!';
+        } catch (Exception $e) {
+            return 'Error sending mail: ' . $e->getMessage();
+        }
+    });
+
+    // Password Reset Routes
+    Route::get('forgot-password', [AuthController::class, 'showForgotPasswordForm'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [AuthController::class, 'sendResetLink'])
+        ->name('password.email');
+
+    Route::get('reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])
+        ->name('password.reset');
+
+    Route::post('reset-password', [AuthController::class, 'resetPassword'])
+        ->name('password.update');
 });
 
 // 🔹 PROTECTED ROUTES (Authenticated Users)
@@ -70,11 +95,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile/delete', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
 
-    // Learning Management  
+    // Learning Management
+
     Route::get('/courses/{course}/payment', [PaymentController::class, 'showPayment'])->name('courses.payment');
-    Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
-
-
+    Route::post('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
     Route::get('/mentor/courses/rejected', [CourseController::class, 'rejectedCourses'])->name('courses.rejected');
     Route::post('/mark-course-complete', [ProgressController::class, 'markCourseComplete'])->name('progress.complete');
     Route::get('/my-courses', [CourseController::class, 'myCourses'])->name('courses.my');

@@ -14,7 +14,6 @@ class EnrollmentController extends Controller
     {
         $this->middleware('auth');
     }
-
     public function enroll($courseId)
     {
         $course = Course::where('status', 'approved')->findOrFail($courseId);
@@ -37,7 +36,6 @@ class EnrollmentController extends Controller
         return redirect()->route('courses.my')
             ->with('success', 'Successfully enrolled in the course.');
     }
-
     public function checkEnrollment($courseId)
     {
         $enrollment = Enrollment::where('user_id', Auth::id())

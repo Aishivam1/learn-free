@@ -21,19 +21,19 @@
         <!-- Courses List -->
         <div class="courses">
             @forelse($pendingCourses as $course)
-                <div class="course">
+                <div class="course" data-category="{{ $course->category ?? '' }}" data-mentor="{{ $course->mentor->name }}"
+                    data-difficulty="{{ $course->difficulty }}">
                     <div class="content">
                         <h3>{{ $course->title }}</h3>
                         <p>{{ $course->description }}</p>
                         <div class="author">By {{ $course->mentor->name }}</div>
-                        <div class="badge">{{ $course->difficulty }}</div>
                     </div>
+                    <div class="badge">{{ $course->difficulty }}</div>
 
                     <!-- View Button -->
                     <a href="{{ route('courses.show', ['course' => $course->id, 'from' => 'pending']) }}"
                         class="btn btn-view">View Details</a>
 
-                    <!-- Approval & Rejection Buttons -->
                     <!-- Approval & Rejection Buttons - Visible Only to Admins -->
                     @if (Auth::user()->role == 'admin')
                         <div class="approval-actions">
@@ -73,8 +73,11 @@
 @push('styles')
     <style>
         .create-course-container {
-            position: relative;
-            left: 15px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-left: 15px;
         }
 
         .btn {
@@ -109,6 +112,8 @@
             background-color: white;
             color: #007bff;
             border: 2px solid #007bff;
+            width: 100%;
+            display: block;
         }
 
         .btn-view:hover {
@@ -116,21 +121,17 @@
             color: white;
         }
 
-        .create-course-btn,
         .approve-btn {
-            display: inline-block;
-            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
             font-size: 16px;
             font-weight: bold;
-            color: white;
-            background-color: #007bff;
             border-radius: 8px;
-            text-decoration: none;
-            transition: background-color 0.3s ease-in-out;
             box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.2);
+            cursor: pointer;
         }
 
-        .create-course-btn:hover,
         .approve-btn:hover {
             background-color: #0056b3;
         }
@@ -140,6 +141,18 @@
             text-align: center;
         }
 
+        .browse-courses h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .browse-courses p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
         .courses {
             display: flex;
             justify-content: center;
@@ -147,6 +160,7 @@
             gap: 20px;
         }
 
+        /* Course Card - Matched with index.blade.php */
         .course {
             display: flex;
             flex-direction: column;
@@ -154,11 +168,13 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 300px;
-            text-align: left;
+            height: 420px;
+            text-align: center;
             position: relative;
             overflow: hidden;
             transition: transform 0.2s ease-in-out;
-            padding-bottom: 60px;
+            justify-content: space-between;
+            padding-bottom: 20px;
         }
 
         .course:hover {
@@ -166,21 +182,31 @@
         }
 
         .course .content {
-            padding: 20px;
-            margin-top: 25px;
-            padding-bottom: 80px;
+            padding: 40px 20px;
+            position: relative;
+            flex-grow: 1;
+            height: 279px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .course .content h3 {
             font-size: 20px;
             color: #333;
             margin-bottom: 10px;
+            height: 48px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .course .content p {
             font-size: 16px;
             color: #666;
             margin-bottom: 10px;
+            height: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .course .content .author {
@@ -188,41 +214,17 @@
             color: #999;
         }
 
-        .course .content .description {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 10px;
-            height: 80px;
-            /* Fixed height for description - increased from index.blade.php */
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            /* Show 4 lines of text */
-            -webkit-box-orient: vertical;
-        }
-
         .badge {
             position: absolute;
             top: 10px;
-            left: 20px;
+            left: 10px;
             background-color: #007bff;
             color: #fff;
-            padding: 5px 5px;
+            padding: 5px 10px;
             border-radius: 5px;
-            font-size: 12px;
-        }
-
-        .view-btn {
-            display: block;
-            text-align: center;
-            margin: 5px auto;
-            padding: 10px;
             font-size: 14px;
             font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
+            z-index: 5;
         }
 
         .approval-actions {
@@ -230,24 +232,19 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            width: 100%;
-            max-width: 300px;
-            /* Adjust as needed */
+            width: 90%;
             margin: 10px auto;
         }
 
         .approval-actions form {
             display: flex;
-            /* Ensures button inside form behaves like the reject button */
             flex: 1;
-            /* Makes both elements (form and button) take equal width */
         }
 
         .approve-btn,
         .reject-btn {
             flex: 1;
             width: 100%;
-            /* Ensures both buttons take full width inside their container */
             margin: 5px 0;
             padding: 10px;
             font-size: 14px;
@@ -256,17 +253,6 @@
             cursor: pointer;
             transition: 0.3s;
             text-align: center;
-        }
-
-        .view-btn {
-            background: white;
-            color: #007bff;
-            border: 1px solid #007bff;
-        }
-
-        .view-btn:hover {
-            background-color: #007bff;
-            color: white;
         }
 
         .reject-btn {
@@ -332,9 +318,17 @@
             display: none;
         }
 
-        .my-4 {
-            margin-top: 0 !important;
-            margin-bottom: 1.5rem !important;
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #ddd;
+            }
+
+            .course {
+                background-color: #1e1e1e;
+                color: #ddd;
+            }
         }
     </style>
 @endpush
